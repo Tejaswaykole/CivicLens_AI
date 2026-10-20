@@ -5,14 +5,19 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import pagination_params
+from app.api.deps import get_current_user, pagination_params
 from app.core.database import get_db
 from app.domain.enums import UserRole
+from app.models.user import User
 from app.schemas.common import Page, PageParams
 from app.schemas.notification import NotificationRead
 from app.services import notifications as notification_service
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(
+    prefix="/notifications",
+    tags=["notifications"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=Page[NotificationRead])
@@ -22,10 +27,12 @@ def list_notifications(
     is_read: bool | None = None,
     params: PageParams = Depends(pagination_params),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> Page[NotificationRead]:
-    return notification_service.list_for_filters(
+    return notification_service.list_for_viewer(
         db,
         params,
+        current_user,
         recipient_user_id=recipient_user_id,
         recipient_role=recipient_role,
         is_read=is_read,
@@ -36,5 +43,6 @@ def list_notifications(
 def mark_notification_read(
     notification_id: uuid.UUID,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> NotificationRead:
-    return notification_service.mark_read(db, notification_id)
+    return notification_service.mark_read(db, notification_id, current_user)

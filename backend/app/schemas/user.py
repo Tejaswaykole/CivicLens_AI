@@ -24,6 +24,7 @@ class UserRead(BaseModel):
     email: str
     role: UserRole
     is_active: bool
+    email_verified: bool
     department_id: uuid.UUID | None
     department: DepartmentBrief | None = None
     designation: str | None

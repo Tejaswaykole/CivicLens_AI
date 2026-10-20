@@ -11,6 +11,7 @@ from app.domain.enums import AuditAction, ComplaintStatus, NotificationType, Use
 from app.domain.workflow import can_transition, format_public_reference, status_history_title
 from app.models.complaint import Complaint
 from app.models.complaint_status_history import ComplaintStatusHistory
+from app.models.user import User
 from app.repositories.complaints import (
     get_complaint_detail,
     get_complaint_for_update,
@@ -26,7 +27,14 @@ from app.schemas.complaint import (
 )
 from app.schemas.mappers import complaint_to_detail, complaint_to_read
 from app.services.audit import record_audit
-from app.services.lookups import require_active_department, require_active_user, require_user
+from app.services.authorization import (
+    ensure_can_change_status,
+    ensure_can_create_complaint,
+    ensure_can_view_complaint,
+    require_same_actor,
+    scope_complaint_filters,
+)
+from app.services.lookups import require_active_department, require_active_user
 from app.services.notifications import notify
 
 
@@ -52,8 +60,10 @@ def _detail(db: Session, complaint_id: uuid.UUID) -> ComplaintDetail:
 def list_all(
     db: Session,
     params: PageParams,
+    actor: User,
     **filters,
 ) -> Page[ComplaintRead]:
+    filters = scope_complaint_filters(actor, filters)
     rows, total = list_complaints(db, params, **filters)
     items = [
         complaint_to_read(complaint, confirmed_priority=priority) for complaint, priority in rows
@@ -61,8 +71,15 @@ def list_all(
     return Page(items=items, page=params.page, page_size=params.page_size, total=total)
 
 
-def get_one(db: Session, complaint_id: uuid.UUID) -> ComplaintDetail:
-    return _detail(db, complaint_id)
+def get_one(db: Session, complaint_id: uuid.UUID, actor: User) -> ComplaintDetail:
+    complaint = get_complaint_detail(db, complaint_id)
+    if complaint is None:
+        raise AppError("not_found", "Complaint not found.", 404)
+    ensure_can_view_complaint(actor, complaint)
+    return complaint_to_detail(
+        complaint,
+        confirmed_priority=latest_confirmed_priority(db, complaint.id),
+    )
 
 
 def _append_status(
@@ -98,7 +115,8 @@ def _append_status(
     return previous
 
 
-def create_complaint(db: Session, payload: ComplaintCreate) -> ComplaintDetail:
+def create_complaint(db: Session, payload: ComplaintCreate, actor: User) -> ComplaintDetail:
+    ensure_can_create_complaint(actor, payload.citizen_id)
     citizen = require_active_user(db, payload.citizen_id)
     if payload.requested_department_id is not None:
         require_active_department(db, payload.requested_department_id)
@@ -157,13 +175,15 @@ def change_status(
     db: Session,
     complaint_id: uuid.UUID,
     payload: ComplaintStatusUpdate,
+    actor: User,
 ) -> ComplaintDetail:
     complaint = get_complaint_for_update(db, complaint_id)
     if complaint is None:
         raise AppError("not_found", "Complaint not found.", 404)
-    actor_id = None
-    if payload.actor_user_id is not None:
-        actor_id = require_user(db, payload.actor_user_id).id
+    ensure_can_view_complaint(actor, complaint)
+    ensure_can_change_status(actor, complaint, payload.status)
+    require_same_actor(payload.actor_user_id, actor, "actor_user_id")
+    actor_id = actor.id
     previous = _append_status(
         db,
         complaint,

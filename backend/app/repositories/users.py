@@ -19,6 +19,13 @@ def get_user(db: Session, user_id: uuid.UUID) -> User | None:
     return db.scalar(user_query().where(User.id == user_id))
 
 
+def get_user_by_email(db: Session, email: str) -> User | None:
+    """Load a user including the password hash. Do not return this object from the API."""
+    return db.scalar(
+        select(User).options(joinedload(User.department)).where(User.email == email.lower())
+    )
+
+
 def list_users(
     db: Session,
     params: PageParams,
@@ -27,10 +34,13 @@ def list_users(
     is_active: bool | None,
     department_id: uuid.UUID | None,
     query: str | None,
+    roles: tuple[UserRole, ...] | None = None,
 ) -> tuple[list[User], int]:
     filters = []
     if role is not None:
         filters.append(User.role == role)
+    if roles:
+        filters.append(User.role.in_(tuple(roles)))
     if is_active is not None:
         filters.append(User.is_active == is_active)
     if department_id is not None:

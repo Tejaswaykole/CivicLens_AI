@@ -1,9 +1,10 @@
-"""Accounts. Password hashes are stored for a later authentication phase and never returned."""
+"""Accounts. Password hashes are Argon2id encodings and are never returned by the API."""
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Index, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.enums import UserRole
@@ -20,11 +21,23 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Index("ix_users_role", "role"),
         Index("ix_users_department_id", "department_id"),
         Index("ix_users_is_active", "is_active"),
+        Index("ix_users_email_verification_token_hash", "email_verification_token_hash"),
     )
 
     display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
+    email_verification_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     role: Mapped[UserRole] = mapped_column(pg_enum(UserRole, "user_role"), nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean,

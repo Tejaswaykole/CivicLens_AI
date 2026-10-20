@@ -6,6 +6,9 @@ email-validator>=2.2.0,<3
 sqlalchemy>=2.0.36,<2.1
 alembic>=1.14.0,<2
 psycopg[binary]>=3.2.3,<4
+pwdlib[argon2]>=0.2.1,<1
+PyJWT>=2.10.0,<3
+limits>=4,<6
 
 # Development and test tools used by the Phase 3 workflow.
 pytest>=8.3.4,<9

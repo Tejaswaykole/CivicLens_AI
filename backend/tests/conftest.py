@@ -1,6 +1,7 @@
 """PostgreSQL fixtures. Tests never connect unless TEST_DATABASE_URL names a _test database."""
 
 import os
+import secrets
 from collections.abc import Generator
 from pathlib import Path
 
@@ -66,8 +67,25 @@ def db_session(migrated_engine: Engine) -> Generator[Session, None, None]:
 
 @pytest.fixture
 def client(db_session: Session, postgres_url: str):
+    previous = {
+        "DATABASE_URL": os.environ.get("DATABASE_URL"),
+        "APP_ENV": os.environ.get("APP_ENV"),
+        "JWT_SECRET": os.environ.get("JWT_SECRET"),
+        "API_HOST": os.environ.get("API_HOST"),
+        "EMAIL_VERIFICATION_DEBUG": os.environ.get("EMAIL_VERIFICATION_DEBUG"),
+        "AUTH_LOGIN_RATE_LIMIT": os.environ.get("AUTH_LOGIN_RATE_LIMIT"),
+        "AUTH_REGISTER_RATE_LIMIT": os.environ.get("AUTH_REGISTER_RATE_LIMIT"),
+    }
     os.environ["DATABASE_URL"] = postgres_url
     os.environ["APP_ENV"] = "test"
+    os.environ["API_HOST"] = "127.0.0.1"
+    os.environ["EMAIL_VERIFICATION_DEBUG"] = "true"
+    os.environ["AUTH_LOGIN_RATE_LIMIT"] = "30/minute"
+    os.environ["AUTH_REGISTER_RATE_LIMIT"] = "20/minute"
+    os.environ["JWT_SECRET"] = secrets.token_urlsafe(48)
+    from app.core.rate_limit import reset_rate_limits
+
+    reset_rate_limits()
     from fastapi.testclient import TestClient
 
     from app.core.config import clear_settings_cache
@@ -78,7 +96,12 @@ def client(db_session: Session, postgres_url: str):
     reset_engine()
 
     def override_get_db():
-        yield db_session
+        try:
+            yield db_session
+            db_session.commit()
+        except Exception:
+            db_session.rollback()
+            raise
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
@@ -86,3 +109,8 @@ def client(db_session: Session, postgres_url: str):
     app.dependency_overrides.clear()
     clear_settings_cache()
     reset_engine()
+    for name, value in previous.items():
+        if value is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = value

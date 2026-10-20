@@ -9,6 +9,11 @@ from app.models import Base
 
 EXPECTED_PATHS = {
     "/api/v1/health",
+    "/api/v1/auth/register",
+    "/api/v1/auth/login",
+    "/api/v1/auth/verify-email",
+    "/api/v1/auth/verification",
+    "/api/v1/auth/me",
     "/api/v1/users",
     "/api/v1/users/{user_id}",
     "/api/v1/departments",
@@ -48,7 +53,6 @@ def test_openapi_lists_phase3_routes_and_hides_secrets(monkeypatch) -> None:
     assert response.status_code == 200
     document = response.json()
     assert EXPECTED_PATHS <= set(document["paths"])
-    assert "/api/v1/auth/login" not in document["paths"]
     assert "/api/v1/predictions" not in document["paths"]
     user_properties = document["components"]["schemas"]["UserRead"]["properties"]
     assert "password_hash" not in user_properties
@@ -57,23 +61,25 @@ def test_openapi_lists_phase3_routes_and_hides_secrets(monkeypatch) -> None:
     reset_engine()
 
 
-def test_invalid_complaint_returns_validation_error(monkeypatch) -> None:
+def test_missing_token_is_rejected_before_the_database(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("JWT_SECRET", "")
     clear_settings_cache()
     reset_engine()
 
+    used = {"database": False}
+
     def unused_db():
+        used["database"] = True
         yield None
 
     app.dependency_overrides[get_db] = unused_db
     client = TestClient(app)
-    response = client.post("/api/v1/complaints", json={"title": "x"})
+    response = client.get("/api/v1/complaints")
     app.dependency_overrides.clear()
-    assert response.status_code == 422
-    body = response.json()
-    assert body["error"]["code"] == "validation_error"
-    assert body["error"]["details"]
-    assert all(set(item) == {"loc", "message", "type"} for item in body["error"]["details"])
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "not_authenticated"
+    assert used["database"] is False
     clear_settings_cache()
     reset_engine()
 

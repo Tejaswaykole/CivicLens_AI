@@ -7,10 +7,16 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError
 from app.domain.enums import NotificationType, UserRole
 from app.models.notification import Notification
-from app.repositories.notifications import get_notification, list_notifications
+from app.models.user import User
+from app.repositories.notifications import (
+    get_notification,
+    list_notifications,
+    list_visible_notifications,
+)
 from app.schemas.common import Page, PageParams
 from app.schemas.mappers import notification_to_read
 from app.schemas.notification import NotificationRead
+from app.services.authorization import forbid
 
 
 def _safe_link(link: str | None) -> str | None:
@@ -45,21 +51,37 @@ def notify(
     )
 
 
-def list_for_filters(
+def list_for_viewer(
     db: Session,
     params: PageParams,
+    viewer: User,
     *,
     recipient_user_id: uuid.UUID | None,
     recipient_role: UserRole | None,
     is_read: bool | None,
 ) -> Page[NotificationRead]:
-    rows, total = list_notifications(
-        db,
-        params,
-        recipient_user_id=recipient_user_id,
-        recipient_role=recipient_role,
-        is_read=is_read,
-    )
+    if viewer.role == UserRole.system_admin:
+        rows, total = list_notifications(
+            db,
+            params,
+            recipient_user_id=recipient_user_id,
+            recipient_role=recipient_role,
+            is_read=is_read,
+        )
+    else:
+        if recipient_user_id is not None and recipient_user_id != viewer.id:
+            raise forbid("You can only read your own notifications.")
+        if recipient_role is not None and recipient_role != viewer.role:
+            raise forbid("You can only read notifications for your own role.")
+        rows, total = list_visible_notifications(
+            db,
+            params,
+            viewer_id=viewer.id,
+            viewer_role=viewer.role,
+            recipient_user_id=recipient_user_id,
+            recipient_role=recipient_role,
+            is_read=is_read,
+        )
     return Page(
         items=[notification_to_read(row) for row in rows],
         page=params.page,
@@ -68,9 +90,19 @@ def list_for_filters(
     )
 
 
-def mark_read(db: Session, notification_id: uuid.UUID) -> NotificationRead:
+def _can_see(viewer: User, notification: Notification) -> bool:
+    if viewer.role == UserRole.system_admin:
+        return True
+    if notification.recipient_user_id == viewer.id:
+        return True
+    return (
+        notification.recipient_user_id is None and notification.recipient_role == viewer.role
+    )
+
+
+def mark_read(db: Session, notification_id: uuid.UUID, viewer: User) -> NotificationRead:
     notification = get_notification(db, notification_id)
-    if notification is None:
+    if notification is None or not _can_see(viewer, notification):
         raise AppError("not_found", "Notification not found.", 404)
     notification.is_read = True
     db.flush()

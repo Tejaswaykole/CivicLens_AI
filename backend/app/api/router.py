@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     assignments,
     audit_logs,
+    auth,
     complaints,
     departments,
     health,
@@ -15,6 +16,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(departments.router)
 api_router.include_router(complaints.router)

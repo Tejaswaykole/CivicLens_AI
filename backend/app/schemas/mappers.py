@@ -53,6 +53,7 @@ def user_to_read(user: User) -> UserRead:
         email=user.email,
         role=user.role,
         is_active=user.is_active,
+        email_verified=user.email_verified,
         department_id=user.department_id,
         department=department_brief(user.department),
         designation=user.designation,
@@ -96,7 +97,7 @@ def history_to_read(item: ComplaintStatusHistory) -> StatusHistoryRead:
         actor_user_id=item.actor_user_id,
         actor_display_name=actor_name,
         actor_label=item.actor_label,
-        actor_verified=False,
+        actor_verified=item.actor_user_id is not None,
         created_at=item.created_at,
     )
 
@@ -207,7 +208,7 @@ def audit_to_read(entry: AuditLog) -> AuditLogRead:
         summary=entry.summary,
         event_metadata=entry.event_metadata,
         actor=actor,
-        actor_verified=False,
+        actor_verified=entry.actor_user_id is not None,
         created_at=entry.created_at,
     )
 

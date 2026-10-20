@@ -1,5 +1,6 @@
 """PostgreSQL behavior. Skipped unless TEST_DATABASE_URL names a _test database."""
 
+import secrets
 import uuid
 from decimal import Decimal
 from pathlib import Path
@@ -8,6 +9,7 @@ import pytest
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 
+from app.core.passwords import hash_password
 from app.domain.enums import (
     AuditAction,
     ComplaintPriority,
@@ -43,19 +45,36 @@ def _department(db, code: str, *, sla: int = 24) -> Department:
     return department
 
 
+_PASSWORDS: dict[uuid.UUID, str] = {}
+
+
 def _user(db, role: UserRole, *, department: Department | None = None, active: bool = True) -> User:
+    password = secrets.token_urlsafe(18)
     user = User(
         display_name=f"Dev {role.value}",
         email=f"{role.value}.{uuid.uuid4().hex[:8]}@example.com",
         role=role,
         is_active=active,
+        email_verified=True,
         department_id=department.id if department else None,
-        password_hash="super-secret-hash-value",
+        password_hash=hash_password(password),
         ward_or_zone="Development ward",
     )
     db.add(user)
     db.flush()
+    _PASSWORDS[user.id] = password
     return user
+
+
+def _auth(client, user: User) -> dict[str, str]:
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": user.email, "password": _PASSWORDS[user.id]},
+    )
+    assert response.status_code == 200, response.text
+    token = response.json()["access_token"]
+    assert "password" not in response.json()
+    return {"Authorization": f"Bearer {token}"}
 
 
 def _complaint_body(
@@ -118,13 +137,13 @@ def test_health_checks_the_database(client) -> None:
 
 def test_user_response_omits_password_hash(client, db_session) -> None:
     user = _user(db_session, UserRole.citizen)
-    response = client.get(f"/api/v1/users/{user.id}")
+    response = client.get(f"/api/v1/users/{user.id}", headers=_auth(client, user))
     assert response.status_code == 200
     body = response.json()
     assert body["email"] == user.email
     assert body["avatar_initials"]
     assert "password_hash" not in body
-    assert "super-secret-hash-value" not in response.text
+    assert "$argon2" not in response.text
 
 
 def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) -> None:
@@ -133,8 +152,16 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
     citizen = _user(db_session, UserRole.citizen)
     officer = _user(db_session, UserRole.department_officer, department=department)
     reviewer = _user(db_session, UserRole.grievance_officer)
+    admin = _user(db_session, UserRole.system_admin)
+    citizen_headers = _auth(client, citizen)
+    reviewer_headers = _auth(client, reviewer)
+    admin_headers = _auth(client, admin)
 
-    created = client.post("/api/v1/complaints", json=_complaint_body(citizen, department))
+    created = client.post(
+        "/api/v1/complaints",
+        json=_complaint_body(citizen, department),
+        headers=citizen_headers,
+    )
     assert created.status_code == 201, created.text
     complaint = created.json()
     assert complaint["status"] == "submitted"
@@ -143,17 +170,18 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
     assert complaint["public_reference"].startswith("DEL-")
     assert len(complaint["public_reference"]) == 15
     assert complaint["status_history"][0]["previous_status"] is None
-    assert complaint["status_history"][0]["actor_verified"] is False
+    assert complaint["status_history"][0]["actor_verified"] is True
     assert complaint["requested_department"]["id"] == str(department.id)
     assert complaint["department"] is None
 
-    missing = client.get(f"/api/v1/complaints/{uuid.uuid4()}")
+    missing = client.get(f"/api/v1/complaints/{uuid.uuid4()}", headers=citizen_headers)
     assert missing.status_code == 404
     assert missing.json()["error"]["code"] == "not_found"
 
     blocked = client.patch(
         f"/api/v1/complaints/{complaint['id']}/status",
         json={"status": "resolved", "note": "This jump is not allowed."},
+        headers=admin_headers,
     )
     assert blocked.status_code == 409
     assert blocked.json()["error"]["code"] == "invalid_status_transition"
@@ -161,6 +189,7 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
     too_early = client.post(
         f"/api/v1/complaints/{complaint['id']}/assignments",
         json={"department_id": str(department.id)},
+        headers=reviewer_headers,
     )
     assert too_early.status_code == 409
 
@@ -172,16 +201,18 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
             "actor_user_id": str(reviewer.id),
             "actor_label": "unverified label",
         },
+        headers=reviewer_headers,
     )
     assert triaged.status_code == 200, triaged.text
     assert triaged.json()["status"] == "triaged"
     assert len(triaged.json()["status_history"]) == 2
-    assert triaged.json()["status_history"][-1]["actor_verified"] is False
+    assert triaged.json()["status_history"][-1]["actor_verified"] is True
 
     wrong_officer = _user(db_session, UserRole.citizen)
     rejected_officer = client.post(
         f"/api/v1/complaints/{complaint['id']}/assignments",
         json={"department_id": str(department.id), "assigned_officer_id": str(wrong_officer.id)},
+        headers=reviewer_headers,
     )
     assert rejected_officer.status_code == 409
 
@@ -194,6 +225,7 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
             "note": "First assignment.",
             "actor_user_id": str(reviewer.id),
         },
+        headers=reviewer_headers,
     )
     assert assigned.status_code == 201, assigned.text
     assert assigned.json()["is_current"] is True
@@ -202,9 +234,10 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
     reassigned = client.post(
         f"/api/v1/complaints/{complaint['id']}/assignments",
         json={"department_id": str(other.id), "note": "Moved to another agency."},
+        headers=reviewer_headers,
     )
     assert reassigned.status_code == 201, reassigned.text
-    detail = client.get(f"/api/v1/complaints/{complaint['id']}")
+    detail = client.get(f"/api/v1/complaints/{complaint['id']}", headers=reviewer_headers)
     assert detail.status_code == 200
     assignments = detail.json()["assignments"]
     assert len(assignments) == 2
@@ -212,40 +245,56 @@ def test_complaint_lifecycle_history_assignment_and_audit(client, db_session) ->
     assert detail.json()["department"]["id"] == str(other.id)
     assert detail.json()["resolution_due_at"] is not None
 
-    audit = client.get("/api/v1/audit-logs", params={"entity_id": complaint["id"], "page_size": 20})
+    audit = client.get(
+        "/api/v1/audit-logs",
+        params={"entity_id": complaint["id"], "page_size": 20},
+        headers=admin_headers,
+    )
     assert audit.status_code == 200
     actions = {item["action"] for item in audit.json()["items"]}
     assert {"COMPLAINT_CREATED", "STATUS_CHANGE", "ASSIGNMENT_CREATED"} <= actions
-    assert all(item["actor_verified"] is False for item in audit.json()["items"])
+    assert all(item["actor_verified"] is True for item in audit.json()["items"])
 
     notices = client.get(
         "/api/v1/notifications",
         params={"recipient_role": "grievance_officer", "page_size": 100},
+        headers=reviewer_headers,
     )
     assert notices.status_code == 200
     match = next(
         item for item in notices.json()["items"] if complaint["public_reference"] in item["title"]
     )
-    marked = client.patch(f"/api/v1/notifications/{match['id']}/read")
+    marked = client.patch(
+        f"/api/v1/notifications/{match['id']}/read",
+        headers=reviewer_headers,
+    )
     assert marked.status_code == 200
     assert marked.json()["is_read"] is True
-    again = client.patch(f"/api/v1/notifications/{match['id']}/read")
+    again = client.patch(
+        f"/api/v1/notifications/{match['id']}/read",
+        headers=reviewer_headers,
+    )
     assert again.json()["is_read"] is True
 
 
 def test_pagination_and_filters(client, db_session) -> None:
     department = _department(db_session, f"F{uuid.uuid4().hex[:6].upper()}")
     citizen = _user(db_session, UserRole.citizen)
+    admin = _user(db_session, UserRole.system_admin)
+    citizen_headers = _auth(client, citizen)
+    admin_headers = _auth(client, admin)
     for index in range(3):
         response = client.post(
             "/api/v1/complaints",
             json=_complaint_body(citizen, department, title=f"Development pothole {index} report"),
+            headers=citizen_headers,
         )
         assert response.status_code == 201, response.text
 
     page = client.get(
         "/api/v1/complaints",
         params={"citizen_id": str(citizen.id), "page": 1, "page_size": 2},
+        headers=citizen_headers,
     )
     assert page.status_code == 200
     body = page.json()
@@ -260,15 +309,24 @@ def test_pagination_and_filters(client, db_session) -> None:
             "status": "submitted",
             "category": "Street Lighting",
         },
+        headers=citizen_headers,
     )
     assert filtered.json()["total"] == 3
 
-    users = client.get("/api/v1/users", params={"role": "citizen", "q": citizen.email})
+    users = client.get(
+        "/api/v1/users",
+        params={"role": "citizen", "q": citizen.email},
+        headers=admin_headers,
+    )
     assert users.status_code == 200
     assert users.json()["total"] == 1
     assert "password_hash" not in users.text
 
-    departments = client.get("/api/v1/departments", params={"q": department.code})
+    departments = client.get(
+        "/api/v1/departments",
+        params={"q": department.code},
+        headers=citizen_headers,
+    )
     assert departments.status_code == 200
     assert departments.json()["total"] == 1
     assert departments.json()["items"][0]["active_cases_count"] == 0
@@ -278,7 +336,15 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
     department = _department(db_session, f"R{uuid.uuid4().hex[:6].upper()}")
     citizen = _user(db_session, UserRole.citizen)
     reviewer = _user(db_session, UserRole.grievance_officer)
-    created = client.post("/api/v1/complaints", json=_complaint_body(citizen, department))
+    admin = _user(db_session, UserRole.system_admin)
+    citizen_headers = _auth(client, citizen)
+    reviewer_headers = _auth(client, reviewer)
+    admin_headers = _auth(client, admin)
+    created = client.post(
+        "/api/v1/complaints",
+        json=_complaint_body(citizen, department),
+        headers=citizen_headers,
+    )
     complaint_id = created.json()["id"]
 
     missing_reason = client.post(
@@ -289,6 +355,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
             "confirmed_priority": "critical",
             "justification": "short",
         },
+        headers=reviewer_headers,
     )
     assert missing_reason.status_code == 422
 
@@ -299,8 +366,9 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
             "suggested_priority": "high",
             "confirmed_priority": "high",
         },
+        headers=reviewer_headers,
     )
-    assert unknown_reviewer.status_code == 404
+    assert unknown_reviewer.status_code == 403
 
     prediction = ModelPrediction(
         complaint_id=uuid.UUID(complaint_id),
@@ -311,7 +379,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
         explanation={"source": "test fixture"},
     )
     db_session.add(prediction)
-    db_session.flush()
+    db_session.commit()
 
     mismatch = client.post(
         f"/api/v1/complaints/{complaint_id}/reviews",
@@ -320,6 +388,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
             "suggested_priority": "low",
             "confirmed_priority": "low",
         },
+        headers=reviewer_headers,
     )
     assert mismatch.status_code == 409
     assert mismatch.json()["error"]["code"] == "suggestion_mismatch"
@@ -331,6 +400,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
             "confirmed_priority": "critical",
             "justification": "The stored suggestion does not match the reported hazard.",
         },
+        headers=reviewer_headers,
     )
     assert override.status_code == 201, override.text
     body = override.json()
@@ -339,7 +409,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
     assert body["confirmed_priority"] == "critical"
     assert body["complaint_status"] == ComplaintStatus.triaged.value
 
-    detail = client.get(f"/api/v1/complaints/{complaint_id}")
+    detail = client.get(f"/api/v1/complaints/{complaint_id}", headers=reviewer_headers)
     assert detail.json()["confirmed_priority"] == "critical"
     assert detail.json()["predictions"][0]["confidence"] is None
     assert detail.json()["predictions"][0]["explanation"] == {"source": "test fixture"}
@@ -347,6 +417,7 @@ def test_human_review_rules_and_audit(client, db_session) -> None:
     audit = client.get(
         "/api/v1/audit-logs",
         params={"entity_id": complaint_id, "action": AuditAction.HITL_OVERRIDE.value},
+        headers=admin_headers,
     )
     assert audit.json()["total"] == 1
     metadata = audit.json()["items"][0]["event_metadata"]

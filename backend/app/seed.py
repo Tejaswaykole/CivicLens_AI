@@ -6,7 +6,9 @@ Startup never calls this module. It refuses to run when APP_ENV=production.
 The rows are fictional development records. They use the department codes,
 names, descriptions, and SLA hours from the frontend mock data, with example.com
 contacts instead of the mock personal names and government addresses.
-No complaints, predictions, or metrics are created. Password hashes are left null.
+No complaints, predictions, or metrics are created. A password hash is written
+only when SEED_DEV_PASSWORD is set to at least 12 characters. The password is
+never printed.
 """
 
 from sqlalchemy import select
@@ -15,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_engine
+from app.core.passwords import hash_password, password_is_acceptable
 from app.domain.enums import UserRole
 from app.models.department import Department
 from app.models.user import User
@@ -103,7 +106,12 @@ def _upsert_department(session: Session, spec: dict) -> str:
     return "created" if created else "updated"
 
 
-def _upsert_user(session: Session, spec: dict, departments: dict[str, Department]) -> str:
+def _upsert_user(
+    session: Session,
+    spec: dict,
+    departments: dict[str, Department],
+    password_hash: str | None,
+) -> str:
     email = spec["email"].lower()
     user = session.scalar(select(User).where(User.email == email))
     department_id = None
@@ -119,7 +127,8 @@ def _upsert_user(session: Session, spec: dict, departments: dict[str, Department
             ward_or_zone=spec["ward_or_zone"],
             department_id=department_id,
             is_active=True,
-            password_hash=None,
+            email_verified=True,
+            password_hash=password_hash,
         )
         session.add(user)
     else:
@@ -129,10 +138,13 @@ def _upsert_user(session: Session, spec: dict, departments: dict[str, Department
         user.ward_or_zone = spec["ward_or_zone"]
         user.department_id = department_id
         user.is_active = True
+        user.email_verified = True
+        if password_hash is not None:
+            user.password_hash = password_hash
     return "created" if created else "updated"
 
 
-def seed(session: Session) -> dict[str, int]:
+def seed(session: Session, *, password_hash: str | None = None) -> dict[str, int]:
     counts = {
         "departments_created": 0,
         "departments_updated": 0,
@@ -149,7 +161,7 @@ def seed(session: Session) -> dict[str, int]:
             raise RuntimeError(f"Department {spec['code']} was not saved.")
         departments[spec["code"]] = department
     for spec in USERS:
-        action = _upsert_user(session, spec, departments)
+        action = _upsert_user(session, spec, departments, password_hash)
         counts[f"users_{action}"] += 1
     session.flush()
     return counts
@@ -163,18 +175,29 @@ def main() -> None:
         raise SystemExit(
             "DATABASE_URL is not configured. Copy backend/.env.example to backend/.env first."
         )
+    password_hash = None
+    if settings.seed_dev_password is not None:
+        if not password_is_acceptable(settings.seed_dev_password):
+            raise SystemExit(
+                "SEED_DEV_PASSWORD must be 12-128 characters with no surrounding spaces."
+            )
+        password_hash = hash_password(settings.seed_dev_password)
     engine = get_engine()
     if engine is None:
         raise SystemExit("Database engine is not available.")
     try:
         with Session(engine) as session:
-            counts = seed(session)
+            counts = seed(session, password_hash=password_hash)
             session.commit()
     except SQLAlchemyError as exc:
         raise SystemExit(
             f"Seed failed ({type(exc).__name__}) for {settings.database_target_label()}."
         ) from None
-    print("Development seed completed. No passwords or model predictions were written.")
+    print("Development seed completed. No model predictions were written.")
+    if password_hash is None:
+        print("Dev accounts have no password and cannot log in until SEED_DEV_PASSWORD is set.")
+    else:
+        print("Dev accounts can log in with SEED_DEV_PASSWORD. The password was not printed.")
     for key, value in counts.items():
         print(f"{key}={value}")
 

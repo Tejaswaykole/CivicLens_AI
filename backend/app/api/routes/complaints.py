@@ -6,9 +6,10 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import pagination_params
+from app.api.deps import get_current_user, pagination_params
 from app.core.database import get_db
 from app.domain.enums import ComplaintStatus
+from app.models.user import User
 from app.schemas.common import Page, PageParams
 from app.schemas.complaint import (
     ComplaintCreate,
@@ -18,7 +19,11 @@ from app.schemas.complaint import (
 )
 from app.services import complaints as complaint_service
 
-router = APIRouter(prefix="/complaints", tags=["complaints"])
+router = APIRouter(
+    prefix="/complaints",
+    tags=["complaints"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=Page[ComplaintRead])
@@ -33,10 +38,12 @@ def list_complaints(
     created_to: datetime | None = None,
     params: PageParams = Depends(pagination_params),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> Page[ComplaintRead]:
     return complaint_service.list_all(
         db,
         params,
+        current_user,
         status=status_filter,
         category=category,
         department_id=department_id,
@@ -49,14 +56,21 @@ def list_complaints(
 
 
 @router.get("/{complaint_id}", response_model=ComplaintDetail)
-def get_complaint(complaint_id: uuid.UUID, db: Session = Depends(get_db)) -> ComplaintDetail:
-    return complaint_service.get_one(db, complaint_id)
+def get_complaint(
+    complaint_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintDetail:
+    return complaint_service.get_one(db, complaint_id, current_user)
 
 
 @router.post("", response_model=ComplaintDetail, status_code=status.HTTP_201_CREATED)
-def create_complaint(payload: ComplaintCreate, db: Session = Depends(get_db)) -> ComplaintDetail:
-    """Register a complaint. citizen_id is not proof that the caller is that citizen."""
-    return complaint_service.create_complaint(db, payload)
+def create_complaint(
+    payload: ComplaintCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintDetail:
+    return complaint_service.create_complaint(db, payload, current_user)
 
 
 @router.patch("/{complaint_id}/status", response_model=ComplaintDetail)
@@ -64,6 +78,6 @@ def update_status(
     complaint_id: uuid.UUID,
     payload: ComplaintStatusUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> ComplaintDetail:
-    """Change status when the transition is allowed. actor_user_id is not authenticated."""
-    return complaint_service.change_status(db, complaint_id, payload)
+    return complaint_service.change_status(db, complaint_id, payload, current_user)

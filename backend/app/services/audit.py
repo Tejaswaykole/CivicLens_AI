@@ -13,6 +13,62 @@ from app.schemas.audit import AuditLogRead
 from app.schemas.common import Page, PageParams
 from app.schemas.mappers import audit_to_read
 
+_SECRET_KEYS = ("password", "token", "secret", "authorization", "jwt", "credential")
+_MAX_TEXT = 300
+
+
+def _sensitive_text(value: str) -> bool:
+    lowered = value.lower()
+    if lowered.startswith("bearer ") or lowered.startswith("eyj"):
+        return True
+    return any(marker in lowered for marker in ("password=", "token=", "secret=", "jwt="))
+
+
+def _scalar(value: Any) -> Any:
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return value
+    if isinstance(value, str):
+        if _sensitive_text(value):
+            return None
+        return value[:_MAX_TEXT]
+    return None
+
+
+def _public_metadata(event_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Keep scalar audit fields. Nested objects and secret-like values are dropped."""
+    if not isinstance(event_metadata, dict):
+        return None
+    cleaned: dict[str, Any] = {}
+    for key, value in event_metadata.items():
+        if not isinstance(key, str) or any(marker in key.lower() for marker in _SECRET_KEYS):
+            continue
+        if isinstance(value, list | tuple):
+            items = []
+            for item in value:
+                if isinstance(item, dict | list | tuple):
+                    items = None
+                    break
+                scalar = _scalar(item)
+                if item is not None and scalar is None:
+                    items = None
+                    break
+                items.append(scalar)
+            if items:
+                cleaned[key] = items
+            continue
+        if isinstance(value, dict):
+            continue
+        scalar = _scalar(value)
+        if value is not None and scalar is None:
+            continue
+        if scalar is not None or value is None:
+            cleaned[key] = scalar
+    return cleaned or None
+
 
 def record_audit(
     db: Session,
@@ -34,7 +90,7 @@ def record_audit(
             entity_id=entity_id,
             summary=cleaned,
             actor_user_id=actor_user_id,
-            event_metadata=event_metadata,
+            event_metadata=_public_metadata(event_metadata),
         )
     )
 

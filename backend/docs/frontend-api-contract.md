@@ -55,15 +55,35 @@ The audit screen filters by `eventType` and searches description, actor name, an
 
 `NotificationsPage` keeps its own copy of `MOCK_NOTIFICATIONS`. It does not read `AppDataContext`, so marks made there do not match the provider. Notification items have `title`, `message`, `type`, `read`, `createdAt`, and optionally `userId`, `role`, and `link`.
 
+## Authentication
+
+Send `Authorization: Bearer <access_token>` on every route except `GET /health`, `POST /auth/register`, and `POST /auth/login`.
+
+`POST /auth/register` accepts `display_name`, `email`, `password`, and optional `ward_or_zone`. It always creates an unverified citizen. Sending `role` returns HTTP 422. The password must be 12 to 128 characters with no leading or trailing spaces. The response is an access token, not the password hash. In development or test, with `EMAIL_VERIFICATION_DEBUG=true`, it also includes `dev_verification_token`. Production does not return that token and does not send email.
+
+`POST /auth/verify-email` accepts `{ "token": "..." }`. The database stores only the SHA-256 hash. A matching unexpired token marks `email_verified` true. An unverified citizen can log in and cannot submit a complaint (`403 email_unverified`).
+
+`POST /auth/login` and `POST /auth/register` are limited per client address. The default is 10 and 5 requests per minute. The counters are in process memory. HTTP 429 `rate_limited` uses one message and does not echo the password.
+
+`POST /auth/login` accepts `email` and `password`. Unknown email, wrong password, a missing hash, and an inactive account all return HTTP 401 `invalid_credentials` with the same message.
+
+`GET /auth/me` returns the `UserRead` shape for the token's user.
+
+Staff accounts are created with `POST /users` and updated with `PATCH /users/{user_id}`. Both require a system administrator. A department officer must include `department_id`. The password is write-only.
+
 ## Endpoint mapping
 
-Base path: `/api/v1`. All of these routes are unauthenticated.
+Base path: `/api/v1`. Business routes require a bearer token. A user id in a body is accepted only when it is the authenticated user.
 
-| Frontend behavior | Method and path | Phase 3 behavior |
+| Frontend behavior | Method and path | Server behavior |
 | --- | --- | --- |
-| App shell health is not implemented | `GET /health` | Reports process status and a real database check |
-| User roster | `GET /users` | Paginated, filterable read |
-| User profile row | `GET /users/{user_id}` | One user, without `password_hash` |
+| Sign-in screen is not wired yet | `POST /auth/login` | Email and password, returns a bearer token |
+| Public citizen registration | `POST /auth/register` | Citizen only. Role cannot be chosen. |
+| Current profile | `GET /auth/me` | The authenticated user, without a password hash |
+| App shell health is not implemented | `GET /health` | Public process and database check |
+| User roster | `GET /users` | Administrators see every role. Other staff see staff accounts only. |
+| User profile row | `GET /users/{user_id}` | Self, or a staff profile the caller is allowed to see |
+| Staff provisioning | `POST /users` and `PATCH /users/{user_id}` | System administrator only |
 | Department cards | `GET /departments` | Paginated read with computed case counts |
 | One department | `GET /departments/{department_id}` | Same shape |
 | Complaint lists and search | `GET /complaints` | Paginated filters |
@@ -76,7 +96,7 @@ Base path: `/api/v1`. All of these routes are unauthenticated.
 | Notification list | `GET /notifications` | Filter by recipient user, role, and read state |
 | Mark one notification read | `PATCH /notifications/{notification_id}/read` | Idempotent |
 
-There is no login, registration, prediction, or user-write endpoint.
+There is no prediction endpoint. The frontend role switcher does not authorize a request.
 
 ## Request and response fields
 
@@ -94,7 +114,7 @@ There is no login, registration, prediction, or user-write endpoint.
 }
 ```
 
-`citizen_id` must refer to an active user. That check is not authentication. `requested_department_id` stores the citizen's selected line agency. It does not create an assignment and does not set the complaint's assigned department.
+`citizen_id` must be the authenticated citizen. Naming another person returns HTTP 403. `requested_department_id` stores the citizen's selected line agency. It does not create an assignment and does not set the complaint's assigned department.
 
 The response is a complaint detail:
 
@@ -155,12 +175,12 @@ A stored prediction, if a future model inserts one, is returned as:
   "actor_user_id": "uuid or null",
   "actor_display_name": "string or null",
   "actor_label": "unverified text or null",
-  "actor_verified": false,
+  "actor_verified": true,
   "created_at": "timestamp"
 }
 ```
 
-The frontend `actor` string and narrative titles such as "Officer Concurrence Recorded" are not stored. `title` is a factual transition label. `actor_verified` is always false in this phase.
+The frontend `actor` string and narrative titles such as "Officer Concurrence Recorded" are not stored. `title` is a factual transition label. `actor_verified` is true when `actor_user_id` is stored.
 
 ### `PATCH /complaints/{complaint_id}/status`
 
@@ -186,6 +206,8 @@ Allowed transitions:
 
 `assigned` to `resolved` is allowed because the department dialog can close a work order without a separate in-progress step. `submitted` to `resolved` is rejected. Any other jump returns HTTP 409 `invalid_status_transition`, and no history row is added.
 
+Who may attempt a transition is separate from whether the workflow allows it. Grievance officers may set `in_review`, `triaged`, or `rejected`. Department officers may set `assigned`, `in_progress`, or `resolved` on complaints already assigned to their department. System administrators may make any transition in the table. If `actor_user_id` is sent, it must be the caller.
+
 The department dialog currently offers `assigned`, `in_progress`, and `resolved` even when the complaint is not in a state that can move there. Phase 7 needs to handle a 409 from that dialog.
 
 ### `POST /complaints/{complaint_id}/assignments`
@@ -201,7 +223,7 @@ The department dialog currently offers `assigned`, `in_progress`, and `resolved`
 }
 ```
 
-The complaint must be `triaged`, `assigned`, or `in_progress`. The department must exist and be active. An officer, when present, must be an active `department_officer`. If that user has a department, it must be the assigned department.
+The complaint must be `triaged`, `assigned`, or `in_progress`. A grievance officer or administrator may assign any active department. A department officer may reassign only inside their own department, and only after the complaint is already assigned there. The department must exist and be active. An officer, when present, must be an active `department_officer`. If that user has a department, it must be the assigned department. `actor_user_id`, when sent, must be the caller.
 
 The first assignment from `triaged` moves the complaint to `assigned` and writes status history. A later assignment keeps the current status, marks the previous assignment `is_current: false`, and keeps both rows. `resolution_due_at` becomes the assignment time plus `sla_target_hours`.
 
@@ -224,7 +246,7 @@ Rules:
 - If no prediction exists and the body includes `suggested_priority`, the review is stored with `suggestion_origin: client_supplied`. That is not a model output.
 - If neither exists, `suggestion_origin` is `none` and `suggested_priority` is null.
 - When the suggestion and the confirmed priority differ, `justification` must be at least 10 characters after trimming. The database enforces the same rule.
-- The reviewer id is checked for existence only. Sending it does not authorize the caller.
+- `reviewer_user_id` must be the authenticated grievance officer or administrator. A different id returns HTTP 403.
 - The audit action is `CONCURRENCE` when the priorities match, `HITL_OVERRIDE` when they differ, and `HUMAN_REVIEW` when there was no suggestion.
 
 The frontend override button only offers `high`. The API accepts any of the four priorities.
@@ -257,7 +279,7 @@ The frontend override button only offers `high`. The API accepts any of the four
 | `avatar_initials` | `avatarInitials` (computed from the display name when omitted) |
 | `department` | `departmentName` via the nested object |
 
-`password_hash` is a nullable column for a future authentication phase. It is not in the schema and is not loaded for these reads.
+`password_hash` is stored as an Argon2id encoding. It is not part of `UserRead` and is not loaded for these reads.
 
 ### Departments
 
@@ -287,14 +309,17 @@ Actions written by this API:
 - `CONCURRENCE`
 - `HITL_OVERRIDE`
 - `HUMAN_REVIEW`
+- `ACCOUNT_CREATED`
+- `ROLE_CHANGED`
+- `ACCOUNT_UPDATED`
 
-The frontend also has `DEPARTMENT_UPDATE`, `USER_CREATE`, and `SYSTEM_ALERT`. Those are not emitted, because this phase has no department or user write API. `COMPLAINT_CREATED` is the registration event the mock called `SYSTEM_ALERT`.
+The frontend also has `DEPARTMENT_UPDATE`, `USER_CREATE`, and `SYSTEM_ALERT`. Those names are not emitted. `ACCOUNT_CREATED` is the account event, and `COMPLAINT_CREATED` is the complaint registration event the mock called `SYSTEM_ALERT`.
 
-`event_metadata` stores identifiers, status names, category, department code, and priority values. It does not store the complaint description, email addresses, or passwords. `actor_verified` is false. There is no hash and no `isSimulated` flag. The audit screen's cryptographic wording should not be connected to this API as if verification existed.
+Only a system administrator can read this list. `event_metadata` stores role names, status names, category, department code, and priority values. It does not store complaint descriptions, passwords, tokens, or secrets. `actor_verified` is true when the event has an `actor_user_id`. Self-registration leaves that id empty. There is no hash and no `isSimulated` flag. The audit screen's cryptographic wording should not be connected to this API as if a ledger verification existed.
 
 ### Notifications
 
-`GET /notifications` filters: `recipient_user_id`, `recipient_role`, `is_read`, `page`, `page_size`.
+`GET /notifications` filters: `recipient_user_id`, `recipient_role`, `is_read`, `page`, `page_size`. A caller other than a system administrator only receives notifications addressed to their user id, plus role notices whose user id is empty and whose role is their own. Asking for another user or role returns HTTP 403. Marking someone else's notification read returns HTTP 404.
 
 | API | Frontend |
 | --- | --- |
@@ -339,7 +364,15 @@ Errors use one shape. Request bodies are not echoed back.
 
 | HTTP | `code` | When |
 | --- | --- | --- |
-| 404 | `not_found` | Unknown complaint, user, department, or notification |
+| 401 | `not_authenticated` | The bearer token is missing |
+| 401 | `invalid_token` | The token is invalid, expired, or has no user |
+| 401 | `invalid_credentials` | Login failed |
+| 401 | `inactive_account` | The token's user is inactive |
+| 403 | `forbidden` | The caller can see the complaint but cannot perform the action |
+| 403 | `email_unverified` | The citizen has not verified an email address |
+| 404 | `not_found` | Unknown row, or a complaint the caller is not allowed to see |
+| 429 | `rate_limited` | Login or registration exceeded the configured limit |
+| 409 | `duplicate_email` | The email is already registered |
 | 409 | `invalid_status_transition` | Status or assignment is not allowed from the current status |
 | 409 | `inactive_user` / `inactive_department` | The referenced row exists but is inactive |
 | 409 | `invalid_officer` | Officer role or department does not match the assignment |
@@ -347,6 +380,9 @@ Errors use one shape. Request bodies are not echoed back.
 | 409 | `conflict` | A database uniqueness conflict. The SQL error is not returned. |
 | 422 | `validation_error` | Field validation, including a missing override justification |
 | 503 | `database_not_configured` / `database_unavailable` | No URL, or the database cannot be used |
+| 503 | `auth_not_configured` | `JWT_SECRET` is missing or still a placeholder |
+
+Changing an id in the URL or body does not grant access. A citizen who names another citizen gets HTTP 403 on create and list, and HTTP 404 when opening a complaint they do not own. A department officer cannot see a complaint assigned to another department. A grievance officer cannot set a field status such as `in_progress`; that update belongs to the assigned department. A system administrator can make any transition the workflow already allows.
 
 Validation `details` contain `loc`, `message`, and `type` only.
 

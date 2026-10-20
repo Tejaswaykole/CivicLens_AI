@@ -10,12 +10,18 @@ from app.core.errors import AppError
 from app.domain.enums import AuditAction, ComplaintStatus, NotificationType, UserRole
 from app.domain.workflow import ASSIGNABLE_STATUSES
 from app.models.assignment import ComplaintAssignment
+from app.models.user import User
 from app.repositories.complaints import get_complaint_for_update
 from app.schemas.assignment import AssignmentCreate
 from app.schemas.complaint import AssignmentRead
 from app.services.audit import record_audit
+from app.services.authorization import (
+    ensure_can_assign,
+    ensure_can_view_complaint,
+    require_same_actor,
+)
 from app.services.complaints import _append_status, _detail
-from app.services.lookups import require_active_department, require_active_user, require_user
+from app.services.lookups import require_active_department, require_active_user
 from app.services.notifications import notify
 
 
@@ -23,10 +29,14 @@ def create_assignment(
     db: Session,
     complaint_id: uuid.UUID,
     payload: AssignmentCreate,
+    actor: User,
 ) -> AssignmentRead:
     complaint = get_complaint_for_update(db, complaint_id)
     if complaint is None:
         raise AppError("not_found", "Complaint not found.", 404)
+    ensure_can_view_complaint(actor, complaint)
+    ensure_can_assign(actor, complaint, payload.department_id)
+    require_same_actor(payload.actor_user_id, actor, "actor_user_id")
     if complaint.status not in ASSIGNABLE_STATUSES:
         raise AppError(
             "invalid_status_transition",
@@ -51,9 +61,7 @@ def create_assignment(
                 409,
             )
 
-    actor_id = None
-    if payload.actor_user_id is not None:
-        actor_id = require_user(db, payload.actor_user_id).id
+    actor_id = actor.id
 
     db.execute(
         update(ComplaintAssignment)

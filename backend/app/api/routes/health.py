@@ -18,7 +18,7 @@ class HealthResponse(BaseModel):
     version: str
     authenticated: bool = Field(
         default=False,
-        description="Phase 3 does not authenticate requests.",
+        description="The health check does not identify a signed-in user.",
     )
 
 

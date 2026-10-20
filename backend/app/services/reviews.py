@@ -8,13 +8,14 @@ from app.core.errors import AppError
 from app.domain.enums import AuditAction, ComplaintStatus, NotificationType, SuggestionOrigin
 from app.domain.workflow import REVIEWABLE_STATUSES
 from app.models.human_review import HumanReview
+from app.models.user import User
 from app.repositories.complaints import get_complaint_for_update, latest_prediction
 from app.schemas.complaint import HumanReviewRead
 from app.schemas.mappers import review_to_read
 from app.schemas.review import HumanReviewCreate
 from app.services.audit import record_audit
+from app.services.authorization import ensure_can_review, ensure_can_view_complaint, forbid
 from app.services.complaints import _append_status, _detail
-from app.services.lookups import require_active_user
 from app.services.notifications import notify
 
 
@@ -26,10 +27,15 @@ def create_review(
     db: Session,
     complaint_id: uuid.UUID,
     payload: HumanReviewCreate,
+    actor: User,
 ) -> HumanReviewRead:
     complaint = get_complaint_for_update(db, complaint_id)
     if complaint is None:
         raise AppError("not_found", "Complaint not found.", 404)
+    ensure_can_view_complaint(actor, complaint)
+    ensure_can_review(actor)
+    if payload.reviewer_user_id != actor.id:
+        raise forbid("reviewer_user_id does not match the authenticated user.")
     if complaint.status not in REVIEWABLE_STATUSES:
         raise AppError(
             "invalid_status_transition",
@@ -37,7 +43,7 @@ def create_review(
             409,
         )
 
-    reviewer = require_active_user(db, payload.reviewer_user_id)
+    reviewer = actor
     prediction = latest_prediction(db, complaint.id)
     stored_priority = prediction.suggested_priority if prediction is not None else None
 

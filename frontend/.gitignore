@@ -1,0 +1,17 @@
+# Frontend specific exclusions
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+.turbo/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Logs
+*.log

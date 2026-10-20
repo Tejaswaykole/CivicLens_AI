@@ -46,6 +46,9 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.joblib
+*.pkl
+models/*.joblib
 
 # Databases, backups & raw user data
 *.dump

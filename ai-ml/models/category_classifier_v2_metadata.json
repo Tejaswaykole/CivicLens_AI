@@ -1,0 +1,283 @@
+{
+  "dataset_version": "V2 (synthetic_complaints_v2.csv)",
+  "dataset_sha256": "d9722d78dab08b97dee8885c37a4e17473cd429846bbc81305714bcf0ad8b639",
+  "total_records": 300,
+  "train_records": 222,
+  "test_records": 78,
+  "random_state": 42,
+  "test_templates_per_category": 4,
+  "total_test_templates": 20,
+  "majority_baseline": {
+    "accuracy": 0.15384615384615385,
+    "macro_avg": {
+      "precision": 0.03076923076923077,
+      "recall": 0.2,
+      "f1-score": 0.05333333333333333,
+      "support": 78.0
+    },
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 14.0
+      },
+      "Public Health": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 20.0
+      },
+      "Roads": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 18.0
+      },
+      "Sanitation": {
+        "precision": 0.15384615384615385,
+        "recall": 1.0,
+        "f1-score": 0.26666666666666666,
+        "support": 12.0
+      },
+      "Water Supply": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 14.0
+      },
+      "accuracy": 0.15384615384615385,
+      "macro avg": {
+        "precision": 0.03076923076923077,
+        "recall": 0.2,
+        "f1-score": 0.05333333333333333,
+        "support": 78.0
+      },
+      "weighted avg": {
+        "precision": 0.02366863905325444,
+        "recall": 0.15384615384615385,
+        "f1-score": 0.041025641025641026,
+        "support": 78.0
+      }
+    }
+  },
+  "model_a_word_tfidf": {
+    "classes": [
+      "Electricity",
+      "Public Health",
+      "Roads",
+      "Sanitation",
+      "Water Supply"
+    ],
+    "accuracy": 0.5641025641025641,
+    "macro_avg": {
+      "precision": 0.5642647058823529,
+      "recall": 0.5815873015873015,
+      "f1-score": 0.550740970499035,
+      "support": 78.0
+    },
+    "weighted_avg": {
+      "precision": 0.5829939668174963,
+      "recall": 0.5641025641025641,
+      "f1-score": 0.5511662884491668,
+      "support": 78.0
+    },
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.23529411764705882,
+        "recall": 0.2857142857142857,
+        "f1-score": 0.25806451612903225,
+        "support": 14.0
+      },
+      "Public Health": {
+        "precision": 0.8125,
+        "recall": 0.65,
+        "f1-score": 0.7222222222222222,
+        "support": 20.0
+      },
+      "Roads": {
+        "precision": 0.5,
+        "recall": 0.2222222222222222,
+        "f1-score": 0.3076923076923077,
+        "support": 18.0
+      },
+      "Sanitation": {
+        "precision": 0.45,
+        "recall": 0.75,
+        "f1-score": 0.5625,
+        "support": 12.0
+      },
+      "Water Supply": {
+        "precision": 0.8235294117647058,
+        "recall": 1.0,
+        "f1-score": 0.9032258064516129,
+        "support": 14.0
+      },
+      "accuracy": 0.5641025641025641,
+      "macro avg": {
+        "precision": 0.5642647058823529,
+        "recall": 0.5815873015873015,
+        "f1-score": 0.550740970499035,
+        "support": 78.0
+      },
+      "weighted avg": {
+        "precision": 0.5829939668174963,
+        "recall": 0.5641025641025641,
+        "f1-score": 0.5511662884491668,
+        "support": 78.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        4,
+        3,
+        2,
+        3,
+        2
+      ],
+      [
+        3,
+        13,
+        2,
+        2,
+        0
+      ],
+      [
+        7,
+        0,
+        4,
+        6,
+        1
+      ],
+      [
+        3,
+        0,
+        0,
+        9,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        14
+      ]
+    ],
+    "train_time_sec": 0.008,
+    "avg_latency_ms": 0.02,
+    "total_test_samples": 78
+  },
+  "model_b_word_char_tfidf": {
+    "classes": [
+      "Electricity",
+      "Public Health",
+      "Roads",
+      "Sanitation",
+      "Water Supply"
+    ],
+    "accuracy": 0.6666666666666666,
+    "macro_avg": {
+      "precision": 0.6645407636738906,
+      "recall": 0.680952380952381,
+      "f1-score": 0.6638967494139908,
+      "support": 78.0
+    },
+    "weighted_avg": {
+      "precision": 0.6745124500542458,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.6615936409039858,
+      "support": 78.0
+    },
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.47368421052631576,
+        "recall": 0.6428571428571429,
+        "f1-score": 0.5454545454545454,
+        "support": 14.0
+      },
+      "Public Health": {
+        "precision": 0.8823529411764706,
+        "recall": 0.75,
+        "f1-score": 0.8108108108108109,
+        "support": 20.0
+      },
+      "Roads": {
+        "precision": 0.5,
+        "recall": 0.3333333333333333,
+        "f1-score": 0.4,
+        "support": 18.0
+      },
+      "Sanitation": {
+        "precision": 0.6,
+        "recall": 0.75,
+        "f1-score": 0.6666666666666666,
+        "support": 12.0
+      },
+      "Water Supply": {
+        "precision": 0.8666666666666667,
+        "recall": 0.9285714285714286,
+        "f1-score": 0.896551724137931,
+        "support": 14.0
+      },
+      "accuracy": 0.6666666666666666,
+      "macro avg": {
+        "precision": 0.6645407636738906,
+        "recall": 0.680952380952381,
+        "f1-score": 0.6638967494139908,
+        "support": 78.0
+      },
+      "weighted avg": {
+        "precision": 0.6745124500542458,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.6615936409039858,
+        "support": 78.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        9,
+        1,
+        4,
+        0,
+        0
+      ],
+      [
+        3,
+        15,
+        0,
+        0,
+        2
+      ],
+      [
+        6,
+        0,
+        6,
+        6,
+        0
+      ],
+      [
+        1,
+        0,
+        2,
+        9,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        13
+      ]
+    ],
+    "train_time_sec": 0.0391,
+    "avg_latency_ms": 0.111,
+    "total_test_samples": 78
+  },
+  "candidate_model": "model_b_word_char_tfidf",
+  "semantic_embeddings_evaluation": {
+    "status": "deferred",
+    "reason": "Sentence-transformers / PyTorch dependencies not installed in the lightweight Python 3.12 environment. Documented for future benchmark experiments."
+  }
+}

@@ -21,6 +21,7 @@ def test_categories_match_the_citizen_form() -> None:
         "Electrical Hazard",
         "Sanitation & Solid Waste",
         "Street Lighting",
+        "Public Health",
     )
 
 

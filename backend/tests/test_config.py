@@ -30,6 +30,64 @@ def test_postgres_url_is_normalized_to_psycopg() -> None:
     assert "secret" not in settings.database_target_label()
 
 
+def test_direct_url_is_normalized_and_validated() -> None:
+    with pytest.raises(ValidationError):
+        Settings(direct_url="sqlite:///direct.db")
+
+    settings = Settings(direct_url="postgresql://user:secret@localhost:5432/civiclens_direct")
+    assert settings.direct_url is not None
+    assert settings.direct_url.startswith("postgresql+psycopg://")
+    assert "secret" not in settings.direct_target_label()
+
+    blank = Settings(direct_url="   ")
+    assert blank.direct_url is None
+    assert blank.direct_target_label() == "not configured"
+
+
+def test_alembic_database_url_prefers_direct_url(monkeypatch) -> None:
+    import importlib.util
+    from pathlib import Path
+
+    backend_root = Path(__file__).resolve().parents[1]
+    env_py_path = backend_root / "alembic" / "env.py"
+    spec = importlib.util.spec_from_file_location("alembic_env_module", str(env_py_path))
+    assert spec is not None and spec.loader is not None
+    alembic_env = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(alembic_env)
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/runtime_db")
+    monkeypatch.setenv("DIRECT_URL", "postgresql://user:pass@localhost:5432/direct_db")
+    clear_settings_cache()
+    # DIRECT_URL takes precedence
+    assert "direct_db" in alembic_env.database_url()
+
+    # When DIRECT_URL is absent, falls back to DATABASE_URL
+    monkeypatch.delenv("DIRECT_URL", raising=False)
+    clear_settings_cache()
+    assert "runtime_db" in alembic_env.database_url()
+    clear_settings_cache()
+
+
+def test_conditional_pooler_detection_and_prepared_statements() -> None:
+    from app.core.database import _is_transaction_pooler, get_connect_args
+
+    # Standard port 5432 or default local DB is not a transaction pooler
+    assert not _is_transaction_pooler("postgresql+psycopg://user:pass@localhost:5432/civiclens")
+    assert get_connect_args("postgresql+psycopg://user:pass@localhost:5432/civiclens") == {}
+
+    # Supabase standard transaction pooler port 6543
+    assert _is_transaction_pooler("postgresql+psycopg://user:pass@pooler.supabase.com:6543/postgres")
+    assert get_connect_args("postgresql+psycopg://user:pass@pooler.supabase.com:6543/postgres") == {
+        "prepare_threshold": None
+    }
+
+    # Explicit pooler=transaction query param
+    assert _is_transaction_pooler("postgresql+psycopg://user:pass@localhost:5432/civiclens?pooler=transaction")
+    assert get_connect_args("postgresql+psycopg://user:pass@localhost:5432/civiclens?pooler=transaction") == {
+        "prepare_threshold": None
+    }
+
+
 def test_wildcard_cors_with_credentials_is_rejected() -> None:
     with pytest.raises(ValidationError):
         Settings(cors_origins="*", cors_allow_credentials=True)

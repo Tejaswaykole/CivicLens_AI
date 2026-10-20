@@ -21,6 +21,25 @@ def test_complaint_rejects_unknown_category() -> None:
         )
 
 
+def test_complaint_accepts_public_health_and_canonical_categories() -> None:
+    for cat in (
+        "Road Infrastructure",
+        "Water & Sewage",
+        "Electrical Hazard",
+        "Sanitation & Solid Waste",
+        "Street Lighting",
+        "Public Health",
+    ):
+        complaint = ComplaintCreate(
+            citizen_id=uuid.uuid4(),
+            title="Valid municipal issue",
+            description="Detailed report description meeting character length requirements.",
+            category=cat,
+            location_address="Lane 7 near the park",
+        )
+        assert complaint.category == cat
+
+
 def test_complaint_strips_and_rejects_short_title() -> None:
     with pytest.raises(ValidationError):
         ComplaintCreate(

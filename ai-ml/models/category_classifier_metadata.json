@@ -1,0 +1,261 @@
+{
+  "model_version": "0.1.0-baseline-tfidf-logreg",
+  "dataset_filename": "synthetic_complaints.csv",
+  "dataset_sha256": "978a425b8fea36841e0d177d0d4e482ab4b08ff1684d2ecfd8e39a6c7b5c02db",
+  "total_records": 150,
+  "train_records": 112,
+  "test_records": 38,
+  "split_method": "group_aware_template_stratified",
+  "random_state": 42,
+  "categories": [
+    "Electricity",
+    "Public Health",
+    "Roads",
+    "Sanitation",
+    "Water Supply"
+  ],
+  "evaluation_metrics": {
+    "classes": [
+      "Electricity",
+      "Public Health",
+      "Roads",
+      "Sanitation",
+      "Water Supply"
+    ],
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.75,
+        "recall": 0.375,
+        "f1-score": 0.5,
+        "support": 8.0
+      },
+      "Public Health": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 11.0
+      },
+      "Roads": {
+        "precision": 0.1111111111111111,
+        "recall": 0.14285714285714285,
+        "f1-score": 0.125,
+        "support": 7.0
+      },
+      "Sanitation": {
+        "precision": 0.3076923076923077,
+        "recall": 0.5714285714285714,
+        "f1-score": 0.4,
+        "support": 7.0
+      },
+      "Water Supply": {
+        "precision": 0.2,
+        "recall": 0.2,
+        "f1-score": 0.2,
+        "support": 5.0
+      },
+      "accuracy": 0.23684210526315788,
+      "macro avg": {
+        "precision": 0.27376068376068374,
+        "recall": 0.25785714285714284,
+        "f1-score": 0.24499999999999997,
+        "support": 38.0
+      },
+      "weighted avg": {
+        "precision": 0.2613585245164193,
+        "recall": 0.23684210526315788,
+        "f1-score": 0.22828947368421054,
+        "support": 38.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        2,
+        1,
+        2
+      ],
+      [
+        0,
+        0,
+        3,
+        6,
+        2
+      ],
+      [
+        0,
+        4,
+        1,
+        2,
+        0
+      ],
+      [
+        0,
+        2,
+        1,
+        4,
+        0
+      ],
+      [
+        1,
+        1,
+        2,
+        0,
+        1
+      ]
+    ],
+    "accuracy": 0.23684210526315788,
+    "macro_avg": {
+      "precision": 0.27376068376068374,
+      "recall": 0.25785714285714284,
+      "f1-score": 0.24499999999999997,
+      "support": 38.0
+    },
+    "weighted_avg": {
+      "precision": 0.2613585245164193,
+      "recall": 0.23684210526315788,
+      "f1-score": 0.22828947368421054,
+      "support": 38.0
+    },
+    "test_size": 38,
+    "test_distribution": {
+      "Public Health": 11,
+      "Electricity": 8,
+      "Roads": 7,
+      "Sanitation": 7,
+      "Water Supply": 5
+    }
+  },
+  "global_feature_importance": {
+    "Electricity": [
+      {
+        "term": "power",
+        "coefficient": 0.5775
+      },
+      {
+        "term": "nights",
+        "coefficient": 0.4615
+      },
+      {
+        "term": "nights creating",
+        "coefficient": 0.4615
+      },
+      {
+        "term": "remained dark",
+        "coefficient": 0.4615
+      },
+      {
+        "term": "fears",
+        "coefficient": 0.4615
+      },
+      {
+        "term": "fears total",
+        "coefficient": 0.4615
+      }
+    ],
+    "Public Health": [
+      {
+        "term": "open",
+        "coefficient": 0.7635
+      },
+      {
+        "term": "basin faucet",
+        "coefficient": 0.5806
+      },
+      {
+        "term": "washer replacement",
+        "coefficient": 0.5806
+      },
+      {
+        "term": "basin",
+        "coefficient": 0.5806
+      },
+      {
+        "term": "needs washer",
+        "coefficient": 0.5806
+      },
+      {
+        "term": "needs",
+        "coefficient": 0.5806
+      }
+    ],
+    "Roads": [
+      {
+        "term": "broken",
+        "coefficient": 0.6021
+      },
+      {
+        "term": "deep",
+        "coefficient": 0.5194
+      },
+      {
+        "term": "missing",
+        "coefficient": 0.4904
+      },
+      {
+        "term": "completely",
+        "coefficient": 0.4663
+      },
+      {
+        "term": "lane",
+        "coefficient": 0.4605
+      },
+      {
+        "term": "slight surface",
+        "coefficient": 0.3799
+      }
+    ],
+    "Sanitation": [
+      {
+        "term": "garbage",
+        "coefficient": 0.7146
+      },
+      {
+        "term": "waste",
+        "coefficient": 0.4542
+      },
+      {
+        "term": "collection truck",
+        "coefficient": 0.4217
+      },
+      {
+        "term": "consecutive",
+        "coefficient": 0.4217
+      },
+      {
+        "term": "garbage collection",
+        "coefficient": 0.4217
+      },
+      {
+        "term": "consecutive rounds",
+        "coefficient": 0.4217
+      }
+    ],
+    "Water Supply": [
+      {
+        "term": "water",
+        "coefficient": 1.0813
+      },
+      {
+        "term": "drinking water",
+        "coefficient": 0.8001
+      },
+      {
+        "term": "drinking",
+        "coefficient": 0.8001
+      },
+      {
+        "term": "supply",
+        "coefficient": 0.6155
+      },
+      {
+        "term": "pipeline",
+        "coefficient": 0.6143
+      },
+      {
+        "term": "municipal",
+        "coefficient": 0.4178
+      }
+    ]
+  }
+}

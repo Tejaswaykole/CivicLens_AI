@@ -9,6 +9,7 @@ COMPLAINT_CATEGORIES: tuple[str, ...] = (
     "Electrical Hazard",
     "Sanitation & Solid Waste",
     "Street Lighting",
+    "Public Health",
 )
 
 # The department work-order screen can close an assigned case or return an

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     api_v1_prefix: str = "/api/v1"
     database_url: str | None = None
+    direct_url: str | None = None
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     cors_allow_credentials: bool = False
     seed_label: str = "development"
@@ -39,7 +40,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    @field_validator("database_url", mode="before")
+    @field_validator("database_url", "direct_url", mode="before")
     @classmethod
     def blank_database_url(cls, value: object) -> object:
         if value is None:
@@ -48,7 +49,7 @@ class Settings(BaseSettings):
             return None
         return value
 
-    @field_validator("database_url", mode="after")
+    @field_validator("database_url", "direct_url", mode="after")
     @classmethod
     def normalize_database_url(cls, value: str | None) -> str | None:
         if value is None:
@@ -59,7 +60,7 @@ class Settings(BaseSettings):
             value = "postgresql+psycopg://" + value[len("postgresql://") :]
         url = make_url(value)
         if url.get_backend_name() != "postgresql":
-            raise ValueError("DATABASE_URL must use PostgreSQL. SQLite is not supported.")
+            raise ValueError("DATABASE_URL and DIRECT_URL must use PostgreSQL. SQLite is not supported.")
         return value
 
     @field_validator("app_env")
@@ -159,6 +160,12 @@ class Settings(BaseSettings):
         if not self.database_url:
             return "not configured"
         return make_url(self.database_url).render_as_string(hide_password=True)
+
+    def direct_target_label(self) -> str:
+        """Direct/migration host and database name with the password hidden."""
+        if not self.direct_url:
+            return "not configured"
+        return make_url(self.direct_url).render_as_string(hide_password=True)
 
 
 @lru_cache

@@ -15,9 +15,12 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.core.config import clear_settings_cache, get_settings  # noqa: E402
 from app.models import Base  # noqa: E402
 
-config = context.config
+try:
+    config = context.config
+except AttributeError:
+    config = None
 
-if config.config_file_name is not None:
+if config is not None and getattr(config, "config_file_name", None) is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
@@ -25,10 +28,11 @@ target_metadata = Base.metadata
 
 def database_url() -> str:
     clear_settings_cache()
-    url = get_settings().database_url
+    settings = get_settings()
+    url = settings.direct_url or settings.database_url
     if not url:
         raise RuntimeError(
-            "DATABASE_URL is not set. Alembic will not fall back to a hardcoded database URL."
+            "Neither DIRECT_URL nor DATABASE_URL is set. Alembic will not fall back to a hardcoded database URL."
         )
     # ConfigParser treats % as interpolation.
     return url.replace("%", "%%")
@@ -60,7 +64,13 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+def get_database_url() -> str:
+    """Public helper matching database_url."""
+    return database_url()
+
+
+if config is not None and getattr(config, "config_file_name", None) is not None:
+    if context.is_offline_mode():
+        run_migrations_offline()
+    else:
+        run_migrations_online()

@@ -1,0 +1,1248 @@
+{
+  "dataset_name": "synthetic_complaints.csv",
+  "total_test_records": 38,
+  "majority_class": "Water Supply",
+  "model_performance": {
+    "accuracy": 0.23684210526315788,
+    "macro_f1": 0.24499999999999997,
+    "macro_precision": 0.27376068376068374,
+    "macro_recall": 0.25785714285714284,
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.75,
+        "recall": 0.375,
+        "f1-score": 0.5,
+        "support": 8.0
+      },
+      "Public Health": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 11.0
+      },
+      "Roads": {
+        "precision": 0.1111111111111111,
+        "recall": 0.14285714285714285,
+        "f1-score": 0.125,
+        "support": 7.0
+      },
+      "Sanitation": {
+        "precision": 0.3076923076923077,
+        "recall": 0.5714285714285714,
+        "f1-score": 0.4,
+        "support": 7.0
+      },
+      "Water Supply": {
+        "precision": 0.2,
+        "recall": 0.2,
+        "f1-score": 0.2,
+        "support": 5.0
+      },
+      "accuracy": 0.23684210526315788,
+      "macro avg": {
+        "precision": 0.27376068376068374,
+        "recall": 0.25785714285714284,
+        "f1-score": 0.24499999999999997,
+        "support": 38.0
+      },
+      "weighted avg": {
+        "precision": 0.2613585245164193,
+        "recall": 0.23684210526315788,
+        "f1-score": 0.22828947368421054,
+        "support": 38.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        2,
+        1,
+        2
+      ],
+      [
+        0,
+        0,
+        3,
+        6,
+        2
+      ],
+      [
+        0,
+        4,
+        1,
+        2,
+        0
+      ],
+      [
+        0,
+        2,
+        1,
+        4,
+        0
+      ],
+      [
+        1,
+        1,
+        2,
+        0,
+        1
+      ]
+    ]
+  },
+  "majority_baseline_performance": {
+    "accuracy": 0.13157894736842105,
+    "macro_f1": 0.046511627906976744,
+    "macro_precision": 0.02631578947368421,
+    "macro_recall": 0.2,
+    "classification_report": {
+      "Electricity": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 8.0
+      },
+      "Public Health": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 11.0
+      },
+      "Roads": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 7.0
+      },
+      "Sanitation": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 7.0
+      },
+      "Water Supply": {
+        "precision": 0.13157894736842105,
+        "recall": 1.0,
+        "f1-score": 0.23255813953488372,
+        "support": 5.0
+      },
+      "accuracy": 0.13157894736842105,
+      "macro avg": {
+        "precision": 0.02631578947368421,
+        "recall": 0.2,
+        "f1-score": 0.046511627906976744,
+        "support": 38.0
+      },
+      "weighted avg": {
+        "precision": 0.017313019390581715,
+        "recall": 0.13157894736842105,
+        "f1-score": 0.030599755201958387,
+        "support": 38.0
+      }
+    }
+  },
+  "instance_records": [
+    {
+      "complaint_id": "SYN-ELE-01079",
+      "template_id": "ELE_T02",
+      "complaint_text": "Public street distribution transformer on Shivaji Nagar 3rd Cross is leaking smoking hot oil and making loud explosion noises.",
+      "true_category": "Electricity",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.2974,
+      "top_positive_features": [
+        {
+          "token": "3rd",
+          "contribution": 0.031
+        },
+        {
+          "token": "3rd cross",
+          "contribution": 0.031
+        },
+        {
+          "token": "cross",
+          "contribution": 0.031
+        },
+        {
+          "token": "nagar 3rd",
+          "contribution": 0.031
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Electricity $\\rightarrow$ Sanitation based on incidental vocabulary: '3rd', '3rd cross'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01142",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Adarsh Colony Block B, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.2063,
+      "top_positive_features": [
+        {
+          "token": "dumped",
+          "contribution": 0.1143
+        },
+        {
+          "token": "stench",
+          "contribution": 0.0881
+        },
+        {
+          "token": "dead",
+          "contribution": 0.0344
+        },
+        {
+          "token": "adarsh",
+          "contribution": 0.0159
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Cross-domain lexical overlap. Words like 'waste' or 'dumped' heavily weight towards Sanitation in training data, overwhelming Public Health pathogen context."
+    },
+    {
+      "complaint_id": "SYN-ROA-01037",
+      "template_id": "ROA_T01",
+      "complaint_text": "Massive road cave-in and 4-foot deep sinkhole opened up suddenly in the middle of Shivaji Nagar 3rd Cross, already caused two motorcycle crashes.",
+      "true_category": "Roads",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.2101,
+      "top_positive_features": [
+        {
+          "token": "3rd",
+          "contribution": 0.0366
+        },
+        {
+          "token": "3rd cross",
+          "contribution": 0.0366
+        },
+        {
+          "token": "cross",
+          "contribution": 0.0366
+        },
+        {
+          "token": "nagar 3rd",
+          "contribution": 0.0366
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Sanitation based on incidental vocabulary: '3rd', '3rd cross'."
+    },
+    {
+      "complaint_id": "SYN-WAT-01105",
+      "template_id": "WAT_T08",
+      "complaint_text": "Water meter glass is cloudy and difficult to read on the external connection on Near Subhash Chandra Bose Park.",
+      "true_category": "Water Supply",
+      "predicted_category": "Electricity",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -1.018,
+      "top_positive_features": [
+        {
+          "token": "bose",
+          "contribution": 0.0616
+        },
+        {
+          "token": "bose park",
+          "contribution": 0.0616
+        },
+        {
+          "token": "chandra",
+          "contribution": 0.0616
+        },
+        {
+          "token": "chandra bose",
+          "contribution": 0.0616
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Water Supply $\\rightarrow$ Electricity based on incidental vocabulary: 'bose', 'bose park'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01030",
+      "template_id": "SAN_T06",
+      "complaint_text": "Fish and poultry shop vendors dumping organic waste openly by the roadside on Shivaji Nagar 3rd Cross, attracting large packs of aggressive dogs.",
+      "true_category": "Sanitation",
+      "predicted_category": "Sanitation",
+      "is_correct": true,
+      "priority": "Medium",
+      "decision_score": -0.8525,
+      "top_positive_features": [
+        {
+          "token": "openly",
+          "contribution": 0.1528
+        },
+        {
+          "token": "waste",
+          "contribution": 0.141
+        },
+        {
+          "token": "3rd",
+          "contribution": 0.0337
+        },
+        {
+          "token": "3rd cross",
+          "contribution": 0.0337
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'openly', 'waste'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01132",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Near Gandhi Public School, Ward 12, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.1934,
+      "top_positive_features": [
+        {
+          "token": "dumped",
+          "contribution": 0.1006
+        },
+        {
+          "token": "stench",
+          "contribution": 0.0775
+        },
+        {
+          "token": "near",
+          "contribution": 0.0515
+        },
+        {
+          "token": "school",
+          "contribution": 0.0386
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Cross-domain lexical overlap. Words like 'waste' or 'dumped' heavily weight towards Sanitation in training data, overwhelming Public Health pathogen context."
+    },
+    {
+      "complaint_id": "SYN-ROA-01046",
+      "template_id": "ROA_T07",
+      "complaint_text": "Road name signage on Vikas Marg near Water Tank is bent and partially rusted, making the street name illegible.",
+      "true_category": "Roads",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -1.1016,
+      "top_positive_features": [
+        {
+          "token": "near",
+          "contribution": 0.0732
+        },
+        {
+          "token": "marg",
+          "contribution": 0.0427
+        },
+        {
+          "token": "marg near",
+          "contribution": 0.0427
+        },
+        {
+          "token": "near water",
+          "contribution": 0.0427
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Sanitation based on incidental vocabulary: 'near', 'marg'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01016",
+      "template_id": "SAN_T06",
+      "complaint_text": "Fish and poultry shop vendors dumping organic waste openly by the roadside on Opposite City Civil Hospital, attracting large packs of aggressive dogs.",
+      "true_category": "Sanitation",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -1.1064,
+      "top_positive_features": [
+        {
+          "token": "hospital",
+          "contribution": 0.115
+        },
+        {
+          "token": "city",
+          "contribution": 0.0532
+        },
+        {
+          "token": "city civil",
+          "contribution": 0.0532
+        },
+        {
+          "token": "civil",
+          "contribution": 0.0532
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Sanitation $\\rightarrow$ Public Health based on incidental vocabulary: 'hospital', 'city'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01147",
+      "template_id": "PUB_T05",
+      "complaint_text": "Public community toilet facility on Sector 4 Main Market Road is choked, running without flushing water and in unhygienic condition.",
+      "true_category": "Public Health",
+      "predicted_category": "Water Supply",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -0.8721,
+      "top_positive_features": [
+        {
+          "token": "water",
+          "contribution": 0.2372
+        },
+        {
+          "token": "main market",
+          "contribution": 0.0511
+        },
+        {
+          "token": "market road",
+          "contribution": 0.0511
+        },
+        {
+          "token": "sector",
+          "contribution": 0.0511
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Public Health $\\rightarrow$ Water Supply based on incidental vocabulary: 'water', 'main market'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01143",
+      "template_id": "PUB_T05",
+      "complaint_text": "Public community toilet facility on Vikas Marg near Water Tank is choked, running without flushing water and in unhygienic condition.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -0.991,
+      "top_positive_features": [
+        {
+          "token": "community",
+          "contribution": 0.1399
+        },
+        {
+          "token": "near",
+          "contribution": 0.0757
+        },
+        {
+          "token": "marg",
+          "contribution": 0.0442
+        },
+        {
+          "token": "marg near",
+          "contribution": 0.0442
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Taxonomy ambiguity between environmental public health vectors and solid waste collection."
+    },
+    {
+      "complaint_id": "SYN-ELE-01086",
+      "template_id": "ELE_T08",
+      "complaint_text": "Street light pole lamp remains switched on during bright daylight hours on Shivaji Nagar 3rd Cross, wasting electricity.",
+      "true_category": "Electricity",
+      "predicted_category": "Electricity",
+      "is_correct": true,
+      "priority": "Low",
+      "decision_score": -1.0044,
+      "top_positive_features": [
+        {
+          "token": "pole",
+          "contribution": 0.1359
+        },
+        {
+          "token": "lamp",
+          "contribution": 0.0868
+        },
+        {
+          "token": "light",
+          "contribution": 0.0868
+        },
+        {
+          "token": "street light",
+          "contribution": 0.0868
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'pole', 'lamp'."
+    },
+    {
+      "complaint_id": "SYN-ELE-01087",
+      "template_id": "ELE_T08",
+      "complaint_text": "Street light pole lamp remains switched on during bright daylight hours on Kalyan Nagar Railway Crossing Lane, wasting electricity.",
+      "true_category": "Electricity",
+      "predicted_category": "Electricity",
+      "is_correct": true,
+      "priority": "Low",
+      "decision_score": -1.0611,
+      "top_positive_features": [
+        {
+          "token": "pole",
+          "contribution": 0.1289
+        },
+        {
+          "token": "lamp",
+          "contribution": 0.0823
+        },
+        {
+          "token": "light",
+          "contribution": 0.0823
+        },
+        {
+          "token": "street light",
+          "contribution": 0.0823
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'pole', 'lamp'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01017",
+      "template_id": "SAN_T03",
+      "complaint_text": "Massive pile of decaying garbage on Shivaji Nagar 3rd Cross caught fire, producing toxic plastic smoke suffocating nearby residents.",
+      "true_category": "Sanitation",
+      "predicted_category": "Sanitation",
+      "is_correct": true,
+      "priority": "High",
+      "decision_score": -0.8257,
+      "top_positive_features": [
+        {
+          "token": "garbage",
+          "contribution": 0.2626
+        },
+        {
+          "token": "plastic",
+          "contribution": 0.0761
+        },
+        {
+          "token": "3rd",
+          "contribution": 0.0357
+        },
+        {
+          "token": "3rd cross",
+          "contribution": 0.0357
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'garbage', 'plastic'."
+    },
+    {
+      "complaint_id": "SYN-ELE-01082",
+      "template_id": "ELE_T02",
+      "complaint_text": "Public street distribution transformer on Sector 4 Main Market Road is leaking smoking hot oil and making loud explosion noises.",
+      "true_category": "Electricity",
+      "predicted_category": "Water Supply",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.0661,
+      "top_positive_features": [
+        {
+          "token": "leaking",
+          "contribution": 0.1388
+        },
+        {
+          "token": "main market",
+          "contribution": 0.0442
+        },
+        {
+          "token": "market road",
+          "contribution": 0.0442
+        },
+        {
+          "token": "sector",
+          "contribution": 0.0442
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Electricity $\\rightarrow$ Water Supply based on incidental vocabulary: 'leaking', 'main market'."
+    },
+    {
+      "complaint_id": "SYN-WAT-01110",
+      "template_id": "WAT_T08",
+      "complaint_text": "Water meter glass is cloudy and difficult to read on the external connection on Opposite City Civil Hospital.",
+      "true_category": "Water Supply",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -1.1107,
+      "top_positive_features": [
+        {
+          "token": "hospital",
+          "contribution": 0.124
+        },
+        {
+          "token": "city",
+          "contribution": 0.0574
+        },
+        {
+          "token": "city civil",
+          "contribution": 0.0574
+        },
+        {
+          "token": "civil",
+          "contribution": 0.0574
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Compound symptom confusion. Pipeline burst flooded a road or mixed with sewage, leading the model to misattribute the primary root cause."
+    },
+    {
+      "complaint_id": "SYN-PUB-01123",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Kalyan Nagar Railway Crossing Lane, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.0545,
+      "top_positive_features": [
+        {
+          "token": "severe",
+          "contribution": 0.0886
+        },
+        {
+          "token": "lane",
+          "contribution": 0.0794
+        },
+        {
+          "token": "crossing",
+          "contribution": 0.0651
+        },
+        {
+          "token": "dead",
+          "contribution": 0.0645
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Public Health $\\rightarrow$ Roads based on incidental vocabulary: 'severe', 'lane'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01029",
+      "template_id": "SAN_T03",
+      "complaint_text": "Massive pile of decaying garbage on Industrial Estate Phase 2, Ring Road caught fire, producing toxic plastic smoke suffocating nearby residents.",
+      "true_category": "Sanitation",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -0.8819,
+      "top_positive_features": [
+        {
+          "token": "estate",
+          "contribution": 0.0856
+        },
+        {
+          "token": "estate phase",
+          "contribution": 0.0856
+        },
+        {
+          "token": "industrial",
+          "contribution": 0.0856
+        },
+        {
+          "token": "industrial estate",
+          "contribution": 0.0856
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Sanitation $\\rightarrow$ Public Health based on incidental vocabulary: 'estate', 'estate phase'."
+    },
+    {
+      "complaint_id": "SYN-WAT-01096",
+      "template_id": "WAT_T08",
+      "complaint_text": "Water meter glass is cloudy and difficult to read on the external connection on Behind Central Bus Terminal.",
+      "true_category": "Water Supply",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -0.9857,
+      "top_positive_features": [
+        {
+          "token": "meter",
+          "contribution": 0.1619
+        },
+        {
+          "token": "bus terminal",
+          "contribution": 0.0593
+        },
+        {
+          "token": "central",
+          "contribution": 0.0593
+        },
+        {
+          "token": "central bus",
+          "contribution": 0.0593
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Compound symptom confusion. Pipeline burst flooded a road or mixed with sewage, leading the model to misattribute the primary root cause."
+    },
+    {
+      "complaint_id": "SYN-WAT-01098",
+      "template_id": "WAT_T05",
+      "complaint_text": "Tap water pressure on Near Subhash Chandra Bose Park has dropped drastically, water barely trickles from ground floor taps during the scheduled 1-hour supply.",
+      "true_category": "Water Supply",
+      "predicted_category": "Water Supply",
+      "is_correct": true,
+      "priority": "Medium",
+      "decision_score": -1.0896,
+      "top_positive_features": [
+        {
+          "token": "water",
+          "contribution": 0.2761
+        },
+        {
+          "token": "supply",
+          "contribution": 0.1521
+        },
+        {
+          "token": "pressure",
+          "contribution": 0.1102
+        },
+        {
+          "token": "tap",
+          "contribution": 0.0926
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'water', 'supply'."
+    },
+    {
+      "complaint_id": "SYN-ROA-01054",
+      "template_id": "ROA_T01",
+      "complaint_text": "Massive road cave-in and 4-foot deep sinkhole opened up suddenly in the middle of Near Gandhi Public School, Ward 12, already caused two motorcycle crashes.",
+      "true_category": "Roads",
+      "predicted_category": "Roads",
+      "is_correct": true,
+      "priority": "High",
+      "decision_score": -1.2321,
+      "top_positive_features": [
+        {
+          "token": "deep",
+          "contribution": 0.1786
+        },
+        {
+          "token": "gandhi",
+          "contribution": 0.0078
+        },
+        {
+          "token": "gandhi public",
+          "contribution": 0.0078
+        },
+        {
+          "token": "near gandhi",
+          "contribution": 0.0078
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'deep', 'gandhi'."
+    },
+    {
+      "complaint_id": "SYN-ELE-01071",
+      "template_id": "ELE_T02",
+      "complaint_text": "Public street distribution transformer on Near Gandhi Public School, Ward 12 is leaking smoking hot oil and making loud explosion noises.",
+      "true_category": "Electricity",
+      "predicted_category": "Water Supply",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.2269,
+      "top_positive_features": [
+        {
+          "token": "leaking",
+          "contribution": 0.1201
+        },
+        {
+          "token": "12 leaking",
+          "contribution": 0.0344
+        },
+        {
+          "token": "public",
+          "contribution": 0.0201
+        },
+        {
+          "token": "gandhi",
+          "contribution": 0.0167
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Electricity $\\rightarrow$ Water Supply based on incidental vocabulary: 'leaking', '12 leaking'."
+    },
+    {
+      "complaint_id": "SYN-ELE-01084",
+      "template_id": "ELE_T02",
+      "complaint_text": "Public street distribution transformer on Adarsh Colony Block B is leaking smoking hot oil and making loud explosion noises.",
+      "true_category": "Electricity",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.3312,
+      "top_positive_features": [
+        {
+          "token": "adarsh",
+          "contribution": 0.02
+        },
+        {
+          "token": "adarsh colony",
+          "contribution": 0.02
+        },
+        {
+          "token": "block",
+          "contribution": 0.02
+        },
+        {
+          "token": "colony",
+          "contribution": 0.02
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Electricity $\\rightarrow$ Roads based on incidental vocabulary: 'adarsh', 'adarsh colony'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01136",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Shivaji Nagar 3rd Cross, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.1486,
+      "top_positive_features": [
+        {
+          "token": "dumped",
+          "contribution": 0.1083
+        },
+        {
+          "token": "stench",
+          "contribution": 0.0835
+        },
+        {
+          "token": "dead",
+          "contribution": 0.0326
+        },
+        {
+          "token": "3rd",
+          "contribution": 0.0239
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Cross-domain lexical overlap. Words like 'waste' or 'dumped' heavily weight towards Sanitation in training data, overwhelming Public Health pathogen context."
+    },
+    {
+      "complaint_id": "SYN-SAN-01018",
+      "template_id": "SAN_T06",
+      "complaint_text": "Fish and poultry shop vendors dumping organic waste openly by the roadside on Near Gandhi Public School, Ward 12, attracting large packs of aggressive dogs.",
+      "true_category": "Sanitation",
+      "predicted_category": "Sanitation",
+      "is_correct": true,
+      "priority": "Medium",
+      "decision_score": -0.958,
+      "top_positive_features": [
+        {
+          "token": "openly",
+          "contribution": 0.133
+        },
+        {
+          "token": "waste",
+          "contribution": 0.1228
+        },
+        {
+          "token": "near",
+          "contribution": 0.0681
+        },
+        {
+          "token": "school",
+          "contribution": 0.0511
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'openly', 'waste'."
+    },
+    {
+      "complaint_id": "SYN-ROA-01039",
+      "template_id": "ROA_T07",
+      "complaint_text": "Road name signage on Opposite City Civil Hospital is bent and partially rusted, making the street name illegible.",
+      "true_category": "Roads",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -1.0651,
+      "top_positive_features": [
+        {
+          "token": "hospital",
+          "contribution": 0.1152
+        },
+        {
+          "token": "city",
+          "contribution": 0.0533
+        },
+        {
+          "token": "city civil",
+          "contribution": 0.0533
+        },
+        {
+          "token": "civil",
+          "contribution": 0.0533
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Public Health based on incidental vocabulary: 'hospital', 'city'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01127",
+      "template_id": "PUB_T05",
+      "complaint_text": "Public community toilet facility on Kalyan Nagar Railway Crossing Lane is choked, running without flushing water and in unhygienic condition.",
+      "true_category": "Public Health",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -1.0988,
+      "top_positive_features": [
+        {
+          "token": "lane",
+          "contribution": 0.1133
+        },
+        {
+          "token": "crossing",
+          "contribution": 0.0929
+        },
+        {
+          "token": "crossing lane",
+          "contribution": 0.0311
+        },
+        {
+          "token": "kalyan",
+          "contribution": 0.0311
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Public Health $\\rightarrow$ Roads based on incidental vocabulary: 'lane', 'crossing'."
+    },
+    {
+      "complaint_id": "SYN-ROA-01047",
+      "template_id": "ROA_T07",
+      "complaint_text": "Road name signage on Industrial Estate Phase 2, Ring Road is bent and partially rusted, making the street name illegible.",
+      "true_category": "Roads",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -0.8379,
+      "top_positive_features": [
+        {
+          "token": "estate",
+          "contribution": 0.0804
+        },
+        {
+          "token": "estate phase",
+          "contribution": 0.0804
+        },
+        {
+          "token": "industrial",
+          "contribution": 0.0804
+        },
+        {
+          "token": "industrial estate",
+          "contribution": 0.0804
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Public Health based on incidental vocabulary: 'estate', 'estate phase'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01140",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Behind Central Bus Terminal, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.1701,
+      "top_positive_features": [
+        {
+          "token": "severe",
+          "contribution": 0.0974
+        },
+        {
+          "token": "dead",
+          "contribution": 0.071
+        },
+        {
+          "token": "bus terminal",
+          "contribution": 0.0358
+        },
+        {
+          "token": "central",
+          "contribution": 0.0358
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Public Health $\\rightarrow$ Roads based on incidental vocabulary: 'severe', 'dead'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01125",
+      "template_id": "PUB_T05",
+      "complaint_text": "Public community toilet facility on Shivaji Nagar 3rd Cross is choked, running without flushing water and in unhygienic condition.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -1.1147,
+      "top_positive_features": [
+        {
+          "token": "community",
+          "contribution": 0.1538
+        },
+        {
+          "token": "3rd",
+          "contribution": 0.0358
+        },
+        {
+          "token": "3rd cross",
+          "contribution": 0.0358
+        },
+        {
+          "token": "cross",
+          "contribution": 0.0358
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Taxonomy ambiguity between environmental public health vectors and solid waste collection."
+    },
+    {
+      "complaint_id": "SYN-ROA-01058",
+      "template_id": "ROA_T01",
+      "complaint_text": "Massive road cave-in and 4-foot deep sinkhole opened up suddenly in the middle of Opposite City Civil Hospital, already caused two motorcycle crashes.",
+      "true_category": "Roads",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.035,
+      "top_positive_features": [
+        {
+          "token": "hospital",
+          "contribution": 0.1241
+        },
+        {
+          "token": "city",
+          "contribution": 0.0574
+        },
+        {
+          "token": "city civil",
+          "contribution": 0.0574
+        },
+        {
+          "token": "civil",
+          "contribution": 0.0574
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Public Health based on incidental vocabulary: 'hospital', 'city'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01130",
+      "template_id": "PUB_T02",
+      "complaint_text": "Dozens of dead poultry birds dumped in open drainage canal on Sector 4 Main Market Road, severe stench and suspected avian disease risk.",
+      "true_category": "Public Health",
+      "predicted_category": "Sanitation",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.2472,
+      "top_positive_features": [
+        {
+          "token": "dumped",
+          "contribution": 0.1086
+        },
+        {
+          "token": "stench",
+          "contribution": 0.0837
+        },
+        {
+          "token": "dead",
+          "contribution": 0.0327
+        },
+        {
+          "token": "market",
+          "contribution": 0.0225
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Cross-domain lexical overlap. Words like 'waste' or 'dumped' heavily weight towards Sanitation in training data, overwhelming Public Health pathogen context."
+    },
+    {
+      "complaint_id": "SYN-ROA-01038",
+      "template_id": "ROA_T01",
+      "complaint_text": "Massive road cave-in and 4-foot deep sinkhole opened up suddenly in the middle of Industrial Estate Phase 2, Ring Road, already caused two motorcycle crashes.",
+      "true_category": "Roads",
+      "predicted_category": "Public Health",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -0.8018,
+      "top_positive_features": [
+        {
+          "token": "estate",
+          "contribution": 0.0851
+        },
+        {
+          "token": "estate phase",
+          "contribution": 0.0851
+        },
+        {
+          "token": "industrial",
+          "contribution": 0.0851
+        },
+        {
+          "token": "industrial estate",
+          "contribution": 0.0851
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Roads $\\rightarrow$ Public Health based on incidental vocabulary: 'estate', 'estate phase'."
+    },
+    {
+      "complaint_id": "SYN-PUB-01141",
+      "template_id": "PUB_T05",
+      "complaint_text": "Public community toilet facility on Near Gandhi Public School, Ward 12 is choked, running without flushing water and in unhygienic condition.",
+      "true_category": "Public Health",
+      "predicted_category": "Water Supply",
+      "is_correct": false,
+      "priority": "Medium",
+      "decision_score": -1.0919,
+      "top_positive_features": [
+        {
+          "token": "water",
+          "contribution": 0.1972
+        },
+        {
+          "token": "public",
+          "contribution": 0.0223
+        },
+        {
+          "token": "gandhi",
+          "contribution": 0.0185
+        },
+        {
+          "token": "gandhi public",
+          "contribution": 0.0185
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Public Health $\\rightarrow$ Water Supply based on incidental vocabulary: 'water', 'public'."
+    },
+    {
+      "complaint_id": "SYN-WAT-01100",
+      "template_id": "WAT_T08",
+      "complaint_text": "Water meter glass is cloudy and difficult to read on the external connection on Adarsh Colony Block B.",
+      "true_category": "Water Supply",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "Low",
+      "decision_score": -1.1369,
+      "top_positive_features": [
+        {
+          "token": "meter",
+          "contribution": 0.1634
+        },
+        {
+          "token": "adarsh",
+          "contribution": 0.0246
+        },
+        {
+          "token": "adarsh colony",
+          "contribution": 0.0246
+        },
+        {
+          "token": "block",
+          "contribution": 0.0246
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: Compound symptom confusion. Pipeline burst flooded a road or mixed with sewage, leading the model to misattribute the primary root cause."
+    },
+    {
+      "complaint_id": "SYN-ELE-01088",
+      "template_id": "ELE_T02",
+      "complaint_text": "Public street distribution transformer on Kalyan Nagar Railway Crossing Lane is leaking smoking hot oil and making loud explosion noises.",
+      "true_category": "Electricity",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.062,
+      "top_positive_features": [
+        {
+          "token": "lane",
+          "contribution": 0.1004
+        },
+        {
+          "token": "crossing",
+          "contribution": 0.0823
+        },
+        {
+          "token": "crossing lane",
+          "contribution": 0.0276
+        },
+        {
+          "token": "kalyan",
+          "contribution": 0.0276
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Electricity $\\rightarrow$ Roads based on incidental vocabulary: 'lane', 'crossing'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01021",
+      "template_id": "SAN_T06",
+      "complaint_text": "Fish and poultry shop vendors dumping organic waste openly by the roadside on Vikas Marg near Water Tank, attracting large packs of aggressive dogs.",
+      "true_category": "Sanitation",
+      "predicted_category": "Sanitation",
+      "is_correct": true,
+      "priority": "Medium",
+      "decision_score": -0.7643,
+      "top_positive_features": [
+        {
+          "token": "openly",
+          "contribution": 0.1426
+        },
+        {
+          "token": "waste",
+          "contribution": 0.1316
+        },
+        {
+          "token": "near",
+          "contribution": 0.073
+        },
+        {
+          "token": "marg",
+          "contribution": 0.0427
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'openly', 'waste'."
+    },
+    {
+      "complaint_id": "SYN-ELE-01072",
+      "template_id": "ELE_T08",
+      "complaint_text": "Street light pole lamp remains switched on during bright daylight hours on Near Gandhi Public School, Ward 12, wasting electricity.",
+      "true_category": "Electricity",
+      "predicted_category": "Electricity",
+      "is_correct": true,
+      "priority": "Low",
+      "decision_score": -1.0523,
+      "top_positive_features": [
+        {
+          "token": "pole",
+          "contribution": 0.1244
+        },
+        {
+          "token": "lamp",
+          "contribution": 0.0795
+        },
+        {
+          "token": "light",
+          "contribution": 0.0795
+        },
+        {
+          "token": "street light",
+          "contribution": 0.0795
+        }
+      ],
+      "analyst_interpretation": "Correctly classified. Model leveraged genuine domain tokens: 'pole', 'lamp'."
+    },
+    {
+      "complaint_id": "SYN-SAN-01015",
+      "template_id": "SAN_T03",
+      "complaint_text": "Massive pile of decaying garbage on Kalyan Nagar Railway Crossing Lane caught fire, producing toxic plastic smoke suffocating nearby residents.",
+      "true_category": "Sanitation",
+      "predicted_category": "Roads",
+      "is_correct": false,
+      "priority": "High",
+      "decision_score": -1.0682,
+      "top_positive_features": [
+        {
+          "token": "lane",
+          "contribution": 0.113
+        },
+        {
+          "token": "crossing",
+          "contribution": 0.0927
+        },
+        {
+          "token": "crossing lane",
+          "contribution": 0.031
+        },
+        {
+          "token": "kalyan",
+          "contribution": 0.031
+        }
+      ],
+      "analyst_interpretation": "Analyst Note: False attribution. Model misclassified Sanitation $\\rightarrow$ Roads based on incidental vocabulary: 'lane', 'crossing'."
+    }
+  ]
+}

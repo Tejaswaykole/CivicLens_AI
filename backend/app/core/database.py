@@ -25,16 +25,42 @@ def reset_engine() -> None:
     _session_factory = None
 
 
+def _is_transaction_pooler(database_url: str) -> bool:
+    """Detect whether connection string targets a transaction-mode pooler (such as Supabase port 6543)."""
+    try:
+        from sqlalchemy.engine.url import make_url
+
+        url = make_url(database_url)
+        # Port 6543 is Supabase's standard transaction pooler port.
+        # Query parameter pooler=transaction is also respected if explicitly supplied.
+        if url.port == 6543 or url.query.get("pooler") == "transaction":
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def get_connect_args(database_url: str) -> dict:
+    """Return driver connection arguments appropriate for the configured host and pooler."""
+    connect_args = {}
+    if _is_transaction_pooler(database_url):
+        connect_args["prepare_threshold"] = None
+    return connect_args
+
+
 def get_engine() -> Engine | None:
     global _engine, _session_factory
     settings = get_settings()
     if not settings.database_url:
         return None
     if _engine is None:
+        connect_args = get_connect_args(settings.database_url)
+
         _engine = create_engine(
             settings.database_url,
             pool_pre_ping=True,
             future=True,
+            connect_args=connect_args,
         )
         _session_factory = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
     return _engine

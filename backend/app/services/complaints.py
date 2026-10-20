@@ -167,6 +167,24 @@ def create_complaint(db: Session, payload: ComplaintCreate, actor: User) -> Comp
         message=f"{payload.category} logged for {ward}.",
         link="/app/officer/inbox",
     )
+
+    # Invoke AI inference safely. Does not overwrite officer-confirmed fields or fail transaction.
+    from app.models.model_prediction import ModelPrediction
+    from app.services.ai_inference import run_complaint_inference
+
+    prediction_data = run_complaint_inference(payload.title, payload.description)
+    if prediction_data is not None:
+        prediction = ModelPrediction(
+            complaint_id=complaint.id,
+            model_identifier=prediction_data["model_identifier"],
+            model_version=prediction_data["model_version"],
+            predicted_category=prediction_data["predicted_category"],
+            suggested_priority=prediction_data["suggested_priority"],
+            confidence=prediction_data["confidence"],
+            explanation=prediction_data["explanation"],
+        )
+        db.add(prediction)
+
     db.flush()
     return _detail(db, complaint.id)
 
